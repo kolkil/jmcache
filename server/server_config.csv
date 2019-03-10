@@ -1,2 +1,6 @@
 static_save	yes
-save_file	./ssave.tdb
+static_load	yes
+static_file	./ssave.tdb
+
+server_address  127.0.0.1
+server_prot 2137
