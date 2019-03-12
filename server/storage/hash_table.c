@@ -116,16 +116,13 @@ uint8_t *hash_table_get(hash_table *table, uint8_t *key)
 uint8_t *hash_table_pop(hash_table *table, uint8_t *key)
 {
 	uint16_t hash = get_hash(key, strlen((char *)key));
-	printf("hh\n");
 	if (table->elements[hash] == NULL)
 		return NULL;
 	linked_container *c = table->elements[hash];
-	printf("ii\n");
 	for (;;)
 	{
 		if (!strcmp((char *)c->data->key, (char *)key))
 		{
-			printf("kk\n");
 			uint8_t *tmp = get_new_copy(c->data->data);
 			if (c->prev == NULL)
 			{
@@ -148,9 +145,6 @@ uint8_t *hash_table_pop(hash_table *table, uint8_t *key)
 				tmp_lcp->next = tmp_lcn;
 				tmp_lcn->prev = tmp_lcp;
 			}
-			printf("ll\n");
-			printf("nn\n");
-			printf("mm\n");
 			return tmp;
 		}
 		if (c->next == NULL)
