@@ -1,2 +1,2 @@
-# my-cache-server
-My cache server
+# MCache
+My cache server and client
