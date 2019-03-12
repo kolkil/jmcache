@@ -6,7 +6,8 @@ typedef struct linked_container linked_container;
 
 struct linked_container
 {
-	linked_container *next;
+	linked_container *next,
+		*prev;
 	content *data;
 };
 
@@ -30,5 +31,5 @@ uint16_t get_hash(uint8_t *, uint8_t);
 int hash_table_insert(hash_table *, uint8_t *, uint8_t *);
 uint8_t *hash_table_get(hash_table *, uint8_t *);
 uint8_t *hash_table_pop(hash_table *, uint8_t *);
-
+uint8_t **hash_table_get_keys(hash_table *);
 void hash_table_print(hash_table *);

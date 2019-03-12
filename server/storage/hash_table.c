@@ -26,6 +26,7 @@ linked_container *get_linked_container()
 {
 	linked_container *c = malloc(sizeof(linked_container));
 	c->next = NULL;
+	c->prev = NULL;
 	c->data = get_default_content();
 	return c;
 }
@@ -60,6 +61,14 @@ linked_container *get_and_set_linked_container(uint8_t *key, uint8_t *data)
 	return c;
 }
 
+uint8_t *get_new_copy(uint8_t *source)
+{
+	uint32_t len = strlen((char *)source);
+	uint8_t *new = calloc(len + 1, sizeof(uint8_t));
+	memcpy(new, source, len);
+	return new;
+}
+
 int hash_table_insert(hash_table *table, uint8_t *key, uint8_t *data)
 {
 	uint16_t hash = get_hash(key, strlen((char *)key));
@@ -90,6 +99,7 @@ int hash_table_insert(hash_table *table, uint8_t *key, uint8_t *data)
 			return 0;
 		}
 		c->next = get_and_set_linked_container(key, data);
+		c->next->prev = c;
 		++table->count;
 	}
 	return 0;
@@ -114,9 +124,83 @@ uint8_t *hash_table_get(hash_table *table, uint8_t *key)
 			}
 			c = c->next;
 		}
+		if (!strcmp((char *)c->data->key, (char *)key))
+		{
+			return NULL;
+		}
 		return c->data->data;
 	}
 	return NULL;
+}
+
+uint8_t *hash_table_pop(hash_table *table, uint8_t *key)
+{
+	uint16_t hash = get_hash(key, strlen((char *)key));
+
+	if (table->elements[hash] == NULL)
+	{
+		return NULL;
+	}
+	else
+	{
+		linked_container *c = table->elements[hash];
+		for (; c->next != NULL;)
+		{
+			if (!strcmp((char *)c->data->key, (char *)key))
+			{
+				uint8_t *tmp = get_new_copy(c->data->data);
+				if (c->prev == NULL)
+				{
+					table->elements[hash] = c->next;
+				}
+				else
+				{
+					c->prev->next = c->next;
+				}
+				free_linked_container(c);
+				return tmp;
+			}
+			c = c->next;
+		}
+		if (!strcmp((char *)c->data->key, (char *)key))
+		{
+			uint8_t *tmp = get_new_copy(c->data->data);
+			if (c->prev == NULL)
+			{
+				table->elements[hash] = c->next;
+			}
+			else
+			{
+				c->prev->next = c->next;
+			}
+			free_linked_container(c);
+			return tmp;
+		}
+		uint8_t *tmp = get_new_copy(c->data->data);
+		free_linked_container(c);
+		return tmp;
+	}
+	return NULL;
+}
+
+uint8_t **hash_table_get_keys(hash_table *t)
+{
+	uint8_t **keys = calloc(t->count, sizeof(uint8_t *));
+	for (uint32_t i = 0, k = 0; i < PRIME_LENGTH; ++i)
+	{
+		if (t->elements[i] == NULL)
+			continue;
+		linked_container *c = t->elements[i];
+		for (; c->next != NULL;)
+		{
+			keys[k] = get_new_copy(c->data->key);
+			c = c->next;
+			++k;
+		}
+		keys[k] = get_new_copy(c->data->key);
+		++k;
+	}
+	return keys;
 }
 
 void hash_table_print(hash_table *table)
