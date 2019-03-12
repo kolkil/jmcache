@@ -17,8 +17,8 @@ hash_table *get_hash_table()
 	hash_table *table = malloc(sizeof(hash_table));
 	for (int i = 0; i < PRIME_LENGTH; ++i)
 		table->elements[i] = NULL;
-	table->filled = 0;
 	table->count = 0;
+	table->filled = 0;
 	return table;
 }
 
