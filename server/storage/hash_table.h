@@ -6,9 +6,9 @@ typedef struct linked_container linked_container;
 
 struct linked_container
 {
-	linked_container *next,
-		*prev;
-	content *data;
+    linked_container *next,
+        *prev;
+    content *data;
 };
 
 typedef struct
@@ -18,9 +18,9 @@ typedef struct
 
 typedef struct
 {
-	linked_container *elements[1021];
-	uint32_t filled,
-		count;
+    linked_container *elements[1021];
+    uint32_t filled,
+        count;
 } hash_table;
 
 hash_table *get_hash_table();

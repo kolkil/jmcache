@@ -1,6 +1,6 @@
 typedef struct
 {
-	char *config_path;
+    char *config_path;
 } input_options;
 
 void set_default_options(input_options *);
