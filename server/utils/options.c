@@ -14,7 +14,7 @@ int parse_input(input_options *opt, int argc, char **argv)
 {
     int c = 0,
         tmp = 0;
-    while ((c = getopt("c:")) != -1)
+    while ((c = getopt(argc, argv, "c:")) != -1)
     {
         switch (c)
         {
