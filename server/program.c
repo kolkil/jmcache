@@ -2,6 +2,7 @@
 #include "communication/socket.h"
 #include "storage/vector.h"
 #include "storage/hash_table.h"
+#include "utils/debug_print.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -18,26 +19,37 @@ char *commands[5] = {
 
 int parse_command(uint8_t *buffer)
 {
+    debug_print("parse_command", 1);
     if (strlen((char *)buffer) < 6)
         return -1;
     char tmp[7] = {0};
-    memcpy(tmp, buffer, 6);
+    // memcpy(tmp, buffer, 6);
+    for (int i = 0; i < 6; ++i)
+    {
+        if ((char)buffer[i] == ' ')
+            break;
+        tmp[i] = buffer[i];
+    }
 
     for (int i = 0; i < 5; ++i)
     {
         if (!strcmp(tmp, commands[i]))
+        {
+            debug_print("parse_command", 0);
             return i + 1;
+        }
     }
+    debug_print("parse_command not", 0);
     return -1;
 }
 
-uint8_t *get_string(int offset, uint8_t *data)
+char *get_string(int *offset, char *data)
 {
-    int len = strlen((char *)(data + offset));
-
-    uint8_t *readed = calloc(sizeof(uint8_t), len + 1);
-
-    for (uint32_t i = offset, flag = 0; i < (uint32_t)len; ++i)
+    debug_print("get_string", 1);
+    int len = strlen(data);
+    char *readed = calloc(sizeof(char), len + 1);
+    uint32_t i = *offset;
+    for (uint32_t flag = 0; i < (uint32_t)len; ++i)
     {
         if (data[i] == '"')
         {
@@ -54,38 +66,76 @@ uint8_t *get_string(int offset, uint8_t *data)
         }
         if (flag)
         {
-            readed[i - offset] = data[i];
+            readed[i - (*offset) - 1] = data[i];
+        }
+        else
+        {
+            (*offset)++;
         }
     }
+    debug_print(readed, 2);
+    debug_print("get_string", 0);
+    *offset = i + 1;
     return readed;
 }
 
-int execute_command(int command, hash_table *hash, uint8_t *data)
+int execute_command(int command, hash_table *hash, uint8_t *data, int client_fd)
 {
-    int command_len = strlen(commands[command - 1]);
-    uint8_t *key,
+    debug_print("execute_command", 1);
+    int offset = strlen(commands[command - 1]),
+        tmp = 0;
+    char *key,
         *value;
     switch (command)
     {
     case INSERT:
-        key = get_string(command_len, data);
-        value = get_string(command_len + strlen((char *)key), data);
-#ifdef DEBUG
-        printf("INSERT, KEY = %s, VALUE = %s\n", key, value);
-#endif
-        hash_table_insert(hash, key, value);
+        debug_print("INSERT", 1);
+        key = get_string(&offset, (char *)data);
+        value = get_string(&offset, (char *)data);
+        hash_table_insert(hash, (uint8_t *)key, (uint8_t *)value);
+        debug_print((char *)key, 2);
+        debug_print((char *)value, 2);
+        debug_print("hash_table get", 1);
+        debug_print((char *)hash_table_get(hash, (uint8_t *)key), 2);
+        debug_print("hash_table get", 0);
         free(key);
         free(value);
+        if (write(client_fd, "OK\n", 3) != 3)
+        {
+            debug_print("Error during responding", 2);
+            debug_print("INSERT not", 0);
+            return -1;
+        }
+        debug_print("INSERT", 0);
+        break;
+
+    case GET:
+        debug_print("GET", 1);
+        key = get_string(&offset, (char *)data);
+        debug_print((char *)key, 2);
+        debug_print("hash_table get", 1);
+        value = (char *)hash_table_get(hash, (uint8_t *)key);
+        debug_print("hash_table get", 0);
+        tmp = strlen(value);
+        if (write(client_fd, value, tmp + 1) != tmp + 1)
+        {
+            debug_print("Error during responding", 2);
+            debug_print("GET not", 0);
+            return -1;
+        }
+        debug_print("GET", 0);
         break;
 
     default:
         break;
     }
+    debug_print("execute_command", 0);
     return 0;
 }
 
 int read_data_send_response(hash_table *hash, int client_fd)
 {
+    debug_print("read_data_send_response", 1);
     uint8_t buffer[BUFFER_SIZE] = {0};
     vector *v = get_vector();
     int res = 0,
@@ -105,10 +155,13 @@ int read_data_send_response(hash_table *hash, int client_fd)
         if (res == 0)
             break;
     }
+    debug_print(v->data, 2);
     command = parse_command((uint8_t *)v->data);
     if (command < 1)
         return -1;
-    execute_command(command, hash, (uint8_t *)v->data);
+    execute_command(command, hash, (uint8_t *)v->data, client_fd);
+    close(client_fd);
+    debug_print("read_data_send_response", 0);
     return 0;
 }
 
@@ -121,6 +174,8 @@ int start_program(config_values *cnf)
     if (params->fd <= 0)
         return params->fd;
 
+    debug_print("main loop", 1);
+
     while (1)
     {
         client_fd = socket_listen_and_accept(params);
@@ -130,6 +185,8 @@ int start_program(config_values *cnf)
         if (tmp < 0)
             return tmp;
     }
+
+    debug_print("main loop", 0);
 
     return 0;
 }

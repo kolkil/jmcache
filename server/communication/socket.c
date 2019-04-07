@@ -1,4 +1,5 @@
 #include "socket.h"
+#include "../utils/debug_print.h"
 
 #include <unistd.h>
 #include <stdio.h>
@@ -9,9 +10,8 @@
 
 socket_params *prepare_socket(char *address, int port)
 {
+    debug_print("prepare_socket", 1);
     socket_params *params = calloc(1, sizeof(socket_params));
-    // int server_fd, new_socket, valread;
-    // struct sockaddr_in address;
     int opt = 1;
 
     if ((params->fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
@@ -34,29 +34,26 @@ socket_params *prepare_socket(char *address, int port)
         printf("bind failed");
         return params;
     }
-    // if (listen(server_fd, 3) < 0)
-    // {
-    // printf("listen");
-    // return -1;
-    // }
-    // if ((new_socket = accept(server_fd, (struct sockaddr *)&(params->address), (socklen_t *)&addrlen)) < 0)
-    // {
-    // printf("accept");
-    // return -1;
-    // }
-    // valread = read(new_socket, buffer, 1024);
-    // printf("%s\n", buffer);
-    // send(new_socket, hello, strlen(hello), 0);
-    // printf("Hello message sent\n");
+    debug_print("prepare_socket", 0);
     return params;
 }
 
 int socket_listen_and_accept(socket_params *params)
 {
+    debug_print("socket_listen_and_accept", 1);
     int new_socket = -1;
-    if (listen(params->fd, 3) < 0)
+    debug_print("listen", 1);
+    if (listen(params->fd, 30) < 0)
         return -1;
-    if ((new_socket = accept(params->fd, (struct sockaddr *)&(params->address), (socklen_t *)sizeof(params->address))))
+    debug_print("listen", 0);
+    debug_print("accept", 1);
+    // if ((new_socket = accept(params->fd, (struct sockaddr *)&(params->address), (socklen_t *)sizeof(&(params->address)))) < 1)
+    if ((new_socket = accept(params->fd, (struct sockaddr *)NULL, NULL)) < 1)
+    {
+        debug_print_int(new_socket);
         return -1;
+    }
+    debug_print("accept", 0);
+    debug_print("socket_listen_and_accept", 0);
     return new_socket;
 }
