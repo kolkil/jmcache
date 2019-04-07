@@ -11,13 +11,6 @@ enum
     ALL = 5
 };
 
-char *commands[5] = {
-    "insert",
-    "get",
-    "pop",
-    "keys",
-    "all"};
-
 typedef struct
 {
     int command;

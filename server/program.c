@@ -9,6 +9,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+char *commands[5] = {
+    "insert",
+    "get",
+    "pop",
+    "keys",
+    "all"};
+
 int parse_command(uint8_t *buffer)
 {
     if (strlen((char *)buffer) < 6)
