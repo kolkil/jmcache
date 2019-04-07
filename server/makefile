@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -O3
+CFLAGS = -Wall -Wextra -O3 -std=c11
 
 all: main clean
 
@@ -9,7 +9,7 @@ debug: all
 test: tests.o clean
 
 main: storage.o communication.o utils.o program.o main.c
-	$(CC) $(CFLAGS) hash_table.o data.o socket.o options.o config.o options.o main.c -o word-counter.out
+	$(CC) $(CFLAGS) program.o vector.o hash_table.o data.o socket.o options.o config.o options.o main.c -o mcache-server.out
 tests.o: storage.o
 	$(CC) $(CFLAGS) data.o hash_table.o tests/main.c -o tests.out
 

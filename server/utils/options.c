@@ -1,8 +1,10 @@
 #include "options.h"
 
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
+#include <getopt.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 void set_default_options(input_options *opt)
 {

@@ -58,7 +58,7 @@ config_values *read_config(char *path)
         }
         else if (!strcmp(buffer, "server_port"))
         {
-            if (fscanf(f, "%d", port) != 1)
+            if (fscanf(f, "%d", &port) != 1)
                 return NULL;
             config->server_port = port;
         }

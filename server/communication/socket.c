@@ -3,17 +3,16 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 
-socket_params *prepare_socket(char address, int port)
+socket_params *prepare_socket(char *address, int port)
 {
     socket_params *params = calloc(1, sizeof(socket_params));
     // int server_fd, new_socket, valread;
     // struct sockaddr_in address;
     int opt = 1;
-    int addrlen = sizeof(params->address);
-    char buffer[1024] = {0};
 
     if ((params->fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
@@ -57,7 +56,7 @@ int socket_listen_and_accept(socket_params *params)
     int new_socket = -1;
     if (listen(params->fd, 3) < 0)
         return -1;
-    if ((new_socket = accept(params->fd, (struct sockaddr *)&(params->address), sizeof(params->address))))
+    if ((new_socket = accept(params->fd, (struct sockaddr *)&(params->address), (socklen_t *)sizeof(params->address))))
         return -1;
     return new_socket;
 }

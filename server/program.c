@@ -26,11 +26,11 @@ int parse_command(uint8_t *buffer)
 
 uint8_t *get_string(int offset, uint8_t *data)
 {
-    int len = strlen(data + offset);
+    int len = strlen((char *)(data + offset));
 
     uint8_t *readed = calloc(sizeof(uint8_t), len + 1);
 
-    for (uint32_t i = offset, flag = 0; i < len; ++i)
+    for (uint32_t i = offset, flag = 0; i < (uint32_t)len; ++i)
     {
         if (data[i] == '"')
         {
@@ -56,11 +56,13 @@ uint8_t *get_string(int offset, uint8_t *data)
 int execute_command(int command, hash_table *hash, uint8_t *data)
 {
     int command_len = strlen(commands[command - 1]);
+    uint8_t *key,
+        *value;
     switch (command)
     {
     case INSERT:
-        uint8_t *key = get_string(command_len, data),
-                *value = get_string(command_len + strlen(key), data);
+        key = get_string(command_len, data);
+        value = get_string(command_len + strlen((char *)key), data);
 #ifdef DEBUG
         printf("INSERT, KEY = %s, VALUE = %s\n", key, value);
 #endif
@@ -72,6 +74,7 @@ int execute_command(int command, hash_table *hash, uint8_t *data)
     default:
         break;
     }
+    return 0;
 }
 
 int read_data_send_response(hash_table *hash, int client_fd)
@@ -87,7 +90,7 @@ int read_data_send_response(hash_table *hash, int client_fd)
         res = read(client_fd, buffer, BUFFER_SIZE);
         if (res < 0)
             return -1;
-        data = strlen(buffer);
+        data = strlen((char *)buffer);
         for (int i = 0; i < data; ++i)
             vector_push_back(v, buffer[i]);
         if (data <= 1023)
@@ -95,8 +98,10 @@ int read_data_send_response(hash_table *hash, int client_fd)
         if (res == 0)
             break;
     }
-    command = parse_command(v->data);
-    execute_command(command, hash, v->data);
+    command = parse_command((uint8_t *)v->data);
+    if (command < 1)
+        return -1;
+    execute_command(command, hash, (uint8_t *)v->data);
     return 0;
 }
 
