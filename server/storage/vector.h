@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define GOLDEN_RATIO 1.618034
+
 typedef struct
 {
 	uint32_t size;

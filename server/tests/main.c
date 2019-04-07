@@ -38,10 +38,60 @@ void compute_hash()
     while (scanf("%s", buffer) == 1)
         printf("%d\n", (int)get_hash((uint8_t *)buffer, strlen(buffer)));
 }
+
+void print_golden_ratio()
+{
+    unsigned long long int fib_num = 50,
+                           a = 1,
+                           b = 1,
+                           c = a + b;
+    if (scanf("%llu", &fib_num) != 1)
+        fib_num = 50;
+
+    for (int i = 0; i < (int)fib_num; ++i)
+    {
+        c = a + b;
+        a = b;
+        b = c;
+    }
+    printf("a = %llu, b = %llu, c = %llu\n", a, b, c);
+    printf("%lf\n", (double)(c) / (double)(a));
+}
+
+void print_string(char *str)
+{
+    printf("%s, ", str);
+    for (int i = 0; i < strlen(str); ++i)
+    {
+        printf("%d", (int)str[i]);
+        if (i < strlen(str) - 1)
+            printf(" ");
+    }
+    printf("\n");
+}
+
+void strings()
+{
+    char *str1 = "k\tk\"",
+         *str2 = "k\\t\\",
+         str3[4] = "\"";
+    if (str3[0] == '\"')
+    {
+        str3[0] = '\\';
+        str3[1] = '\"';
+    }
+
+    print_string(str1);
+    print_string(str2);
+    print_string(str3);
+}
+
 int menu()
 {
     printf("[1]\thash_table\n");
     printf("[2]\tcompute_hash\n");
+    printf("[3]\tprint_golden_ratio\n");
+    printf("[4]\tstrings\n");
     int x = 0,
         z = scanf("%d", &x);
     if (z != 1)
@@ -58,6 +108,12 @@ int main(void)
         break;
     case 2:
         compute_hash();
+        break;
+    case 3:
+        print_golden_ratio();
+        break;
+    case 4:
+        strings();
         break;
     default:
         break;

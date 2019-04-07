@@ -24,11 +24,11 @@ int64_t vector_push_back(vector *v, char value)
 {
 	if (v->current >= (int64_t)(v->size - 1))
 	{
-		char *tmp = realloc(v->data, sizeof(char) * (v->size * 2));
+		char *tmp = realloc(v->data, sizeof(char) * (int)((double)v->size * GOLDEN_RATIO));
 		if (tmp == NULL)
 			return -1;
 		v->data = tmp;
-		v->size *= 2;
+		v->size *= GOLDEN_RATIO;
 	}
 	v->data[++v->current] = value;
 	return v->current;
