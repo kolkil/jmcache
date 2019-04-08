@@ -1,21 +1,16 @@
 ## this is communication schema
 
 * Insert
-	query:
-		insert key value
-	example:
-		insert car ferrari
-	response:
-		OK
-	or:
-		Err
-
+	* Query: 
+		>`insert "key" "value"`
+	* Response
+		>`OK "value"`
+	* Or
+		>`Err`
 * Get
-	query:
-		get key
-	example:
-		get car
-	response:
-		OK ferrari
-	or:
-		Err
+	* Query:
+		>`get "key"`
+	* Response
+		>`OK "value"`
+	* Or
+		>`Err`
