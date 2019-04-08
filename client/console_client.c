@@ -52,7 +52,7 @@ int main()
         if (scanf("%s", value_buffer) != 1)
             return 0;
         sprintf(total_buffer, "%s \"%s\" \"%s\"", command_buffer, key_buffer, value_buffer);
-        printf("%s\n", total_buffer);
+        printf("total_buffer - %s\n", total_buffer);
         if (x = send(sock, total_buffer, strlen(total_buffer), 0), x < 1)
         {
             printf("send error %d\n", x);
@@ -60,6 +60,10 @@ int main()
         }
         valread = read(sock, buffer, 1024);
         printf("%s\n", buffer);
+        memset(total_buffer, 0, 1024);
+        memset(key_buffer, 0, 1024);
+        memset(value_buffer, 0, 1024);
+        memset(command_buffer, 0, 1024);
     }
     return 0;
 }

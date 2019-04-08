@@ -21,9 +21,12 @@ int parse_command(uint8_t *buffer)
 {
     debug_print("parse_command", 1);
     if (strlen((char *)buffer) < 6)
+    {
+        debug_print("parse_command", 0);
         return -1;
+    }
     char tmp[7] = {0};
-    // memcpy(tmp, buffer, 6);
+
     for (int i = 0; i < 6; ++i)
     {
         if ((char)buffer[i] == ' ')
@@ -116,12 +119,25 @@ int execute_command(int command, hash_table *hash, uint8_t *data, int client_fd)
         debug_print("hash_table get", 1);
         value = (char *)hash_table_get(hash, (uint8_t *)key);
         debug_print("hash_table get", 0);
-        tmp = strlen(value);
-        if (write(client_fd, value, tmp + 1) != tmp + 1)
+
+        if (value == NULL)
         {
-            debug_print("Error during responding", 2);
-            debug_print("GET not", 0);
-            return -1;
+            if (write(client_fd, "Err\n", 4) != 4)
+            {
+                debug_print("Error during responding", 2);
+                debug_print("GET not", 0);
+                return -1;
+            }
+        }
+        else
+        {
+            tmp = strlen(value);
+            if (write(client_fd, value, tmp + 1) != tmp + 1)
+            {
+                debug_print("Error during responding", 2);
+                debug_print("GET not", 0);
+                return -1;
+            }
         }
         debug_print("GET", 0);
         break;
@@ -146,7 +162,10 @@ int read_data_send_response(hash_table *hash, int client_fd)
     {
         res = read(client_fd, buffer, BUFFER_SIZE);
         if (res < 0)
+        {
+            debug_print("read_data_send_response", 0);
             return -1;
+        }
         data = strlen((char *)buffer);
         for (int i = 0; i < data; ++i)
             vector_push_back(v, buffer[i]);
@@ -158,7 +177,10 @@ int read_data_send_response(hash_table *hash, int client_fd)
     debug_print(v->data, 2);
     command = parse_command((uint8_t *)v->data);
     if (command < 1)
+    {
+        debug_print("read_data_send_response", 0);
         return -1;
+    }
     execute_command(command, hash, (uint8_t *)v->data, client_fd);
     close(client_fd);
     debug_print("read_data_send_response", 0);
@@ -176,14 +198,18 @@ int start_program(config_values *cnf)
 
     debug_print("main loop", 1);
 
-    while (1)
+    for(unsigned long long int i = 0; ; ++i)
     {
+        debug_print_raw("REQUEST");
+        debug_print_raw_int(i);
         client_fd = socket_listen_and_accept(params);
         if (client_fd <= 0)
             return client_fd;
         tmp = read_data_send_response(hash, client_fd);
         if (tmp < 0)
-            return tmp;
+        {
+            debug_print("Error", 2);
+        }
     }
 
     debug_print("main loop", 0);

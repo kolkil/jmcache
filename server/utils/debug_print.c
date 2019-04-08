@@ -38,3 +38,23 @@ void debug_print_int(int msg)
         msg = 1;
     return;
 }
+
+void debug_print_raw(char *msg)
+{
+#ifdef DEBUG
+    printf("%s\n", msg);
+#endif
+    if (msg == NULL)
+        msg = NULL;
+    return;
+}
+
+void debug_print_raw_int(int msg)
+{
+#ifdef DEBUG
+    printf("%d\n", msg);
+#endif
+    if (msg == 1)
+        msg = 1;
+    return;
+}
