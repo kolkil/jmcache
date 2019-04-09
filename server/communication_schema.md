@@ -4,7 +4,7 @@
 	* Query: 
 		>`insert "key" "value"`
 	* Response
-		>`OK "value"`
+		>`OK`
 	* Or
 		>`Err`
 * Get
