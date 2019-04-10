@@ -3,6 +3,7 @@
 #include "storage/vector.h"
 #include "storage/hash_table.h"
 #include "utils/debug_print.h"
+#include "utils/parser.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -10,153 +11,89 @@
 #include <string.h>
 #include <stdlib.h>
 
-char *commands[5] = {
-    "insert",
-    "get",
-    "pop",
-    "keys",
-    "all"};
-
-int parse_command(uint8_t *buffer)
+int write_err_close_fd_return_0(int client_fd)
 {
-    debug_print("parse_command", 1);
-    if (strlen((char *)buffer) < 6)
-    {
-        debug_print("parse_command", 0);
-        return -1;
-    }
-    char tmp[7] = {0};
-
-    for (int i = 0; i < 6; ++i)
-    {
-        if ((char)buffer[i] == ' ')
-            break;
-        tmp[i] = buffer[i];
-    }
-
-    for (int i = 0; i < 5; ++i)
-    {
-        if (!strcmp(tmp, commands[i]))
-        {
-            debug_print("parse_command", 0);
-            return i + 1;
-        }
-    }
-    debug_print("parse_command not", 0);
-    return -1;
+    if (write(client_fd, "Err\n", 4))
+        close(client_fd);
+    else
+        close(client_fd);
+    return 0;
 }
 
-char *get_string(int *offset, char *data)
+int execute_insert(parsed_data *parsed, hash_table *hash, int client_fd)
 {
-    debug_print("get_string", 1);
-    int len = strlen(data);
-    char *readed = calloc(sizeof(char), len + 1);
-    uint32_t i = *offset;
-    for (uint32_t flag = 0; i < (uint32_t)len; ++i)
-    {
-        if (data[i] == '"')
-        {
-            if (!flag)
-            {
-                flag = 1;
-                continue;
-            }
-            else if (data[i - 1] != '\\')
-            {
-                flag = 0;
-                break;
-            }
-        }
-        if (flag)
-        {
-            readed[i - (*offset) - 1] = data[i];
-        }
-        else
-        {
-            (*offset)++;
-        }
-    }
-    debug_print(readed, 2);
-    debug_print("get_string", 0);
-    *offset = i + 1;
-    return readed;
+    if (strlen(parsed->first_param.content) <= 0)
+        return write_err_close_fd_return_0(client_fd);
+
+    int insert_result = hash_table_insert(hash, (uint8_t *)parsed->first_param.content, (uint8_t *)parsed->second_param.content);
+
+    debug_print(parsed->first_param.content, 2);
+    debug_print(parsed->second_param.content, 2);
+
+    if (insert_result)
+        return write_err_close_fd_return_0(client_fd);
+
+    if (write(client_fd, "OK\n", 3) != 3)
+        debug_print("error during responding", 2);
+
+    close(client_fd);
+
+    return 0;
 }
 
-int execute_command(int command, hash_table *hash, uint8_t *data, int client_fd)
+int execute_get(parsed_data *parsed, hash_table *hash, int client_fd)
 {
-    debug_print("execute_command", 1);
-    int offset = strlen(commands[command - 1]),
-        tmp = 0;
-    char *key,
-        *value;
-    switch (command)
+    if (strlen(parsed->first_param.content) <= 0)
+        return write_err_close_fd_return_0(client_fd);
+
+    char *value = (char *)hash_table_get(hash, (uint8_t *)parsed->first_param.content);
+
+    debug_print(value, 2);
+
+    if (value == NULL)
+        return write_err_close_fd_return_0(client_fd);
+
+    int value_len = strlen(value);
+
+    if (write(client_fd, value, value_len) != value_len)
+        debug_print("error during responding", 2);
+
+    close(client_fd);
+
+    return 0;
+}
+
+int react_on_input(parsed_data *parsed, hash_table *hash, int client_fd)
+{
+    switch (parsed->command)
     {
     case INSERT:
-        debug_print("INSERT", 1);
-        key = get_string(&offset, (char *)data);
-        value = get_string(&offset, (char *)data);
-        hash_table_insert(hash, (uint8_t *)key, (uint8_t *)value);
-        debug_print((char *)key, 2);
-        debug_print((char *)value, 2);
-        debug_print("hash_table get", 1);
-        debug_print((char *)hash_table_get(hash, (uint8_t *)key), 2);
-        debug_print("hash_table get", 0);
-        free(key);
-        free(value);
-        if (write(client_fd, "OK\n", 3) != 3)
-        {
-            debug_print("Error during responding", 2);
-            debug_print("INSERT not", 0);
-            return -1;
-        }
         debug_print("INSERT", 0);
+        execute_insert(parsed, hash, client_fd);
+        debug_print("INSERT", 1);
         break;
-
     case GET:
-        debug_print("GET", 1);
-        key = get_string(&offset, (char *)data);
-        debug_print((char *)key, 2);
-        debug_print("hash_table get", 1);
-        value = (char *)hash_table_get(hash, (uint8_t *)key);
-        debug_print("hash_table get", 0);
-
-        if (value == NULL)
-        {
-            if (write(client_fd, "Err\n", 4) != 4)
-            {
-                debug_print("Error during responding", 2);
-                debug_print("GET not", 0);
-                return -1;
-            }
-        }
-        else
-        {
-            tmp = strlen(value);
-            if (write(client_fd, value, tmp + 1) != tmp + 1)
-            {
-                debug_print("Error during responding", 2);
-                debug_print("GET not", 0);
-                return -1;
-            }
-        }
-        debug_print("GET", 0);
+        execute_get(parsed, hash, client_fd);
         break;
-
+    case POP:
+        break;
+    case KEYS:
+        break;
+    case ALL:
+        break;
     default:
         break;
     }
-    debug_print("execute_command", 0);
     return 0;
 }
 
 int read_data_send_response(hash_table *hash, int client_fd)
 {
     debug_print("read_data_send_response", 1);
-    uint8_t buffer[BUFFER_SIZE] = {0};
+    char buffer[BUFFER_SIZE] = {0};
     vector *v = get_vector();
     int res = 0,
-        data = -1,
-        command = -1;
+        data_len = -1;
 
     while (1)
     {
@@ -166,24 +103,33 @@ int read_data_send_response(hash_table *hash, int client_fd)
             debug_print("read_data_send_response", 0);
             return -1;
         }
-        data = strlen((char *)buffer);
-        for (int i = 0; i < data; ++i)
+        data_len = strlen(buffer);
+        for (int i = 0; i < data_len; ++i)
             vector_push_back(v, buffer[i]);
-        if (data <= 1023)
+        if (data_len <= 1023)
             break;
         if (res == 0)
             break;
+        memset(buffer, 0, BUFFER_SIZE);
     }
     debug_print(v->data, 2);
-    command = parse_command((uint8_t *)v->data);
-    if (command < 1)
+
+    parsed_data parsed = parse_data(v->data);
+
+    if (parsed.error)
     {
+        debug_print("error", 2);
+        debug_print(parsed.error_message, 2);
         debug_print("read_data_send_response", 0);
+        close(client_fd);
         return -1;
     }
-    execute_command(command, hash, (uint8_t *)v->data, client_fd);
+
+    react_on_input(&parsed, hash, client_fd);
     close(client_fd);
+
     debug_print("read_data_send_response", 0);
+
     return 0;
 }
 
@@ -198,13 +144,16 @@ int start_program(config_values *cnf)
 
     debug_print("main loop", 1);
 
-    for(unsigned long long int i = 0; ; ++i)
+    for (unsigned long long int i = 0;; ++i)
     {
         debug_print_raw("REQUEST");
         debug_print_raw_int(i);
         client_fd = socket_listen_and_accept(params);
         if (client_fd <= 0)
-            return client_fd;
+        {
+            debug_print("Could not estabilish connection", 2);
+            continue;
+        }
         tmp = read_data_send_response(hash, client_fd);
         if (tmp < 0)
         {

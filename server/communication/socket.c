@@ -47,7 +47,6 @@ int socket_listen_and_accept(socket_params *params)
         return -1;
     debug_print("listen", 0);
     debug_print("accept", 1);
-    // if ((new_socket = accept(params->fd, (struct sockaddr *)&(params->address), (socklen_t *)sizeof(&(params->address)))) < 1)
     if ((new_socket = accept(params->fd, (struct sockaddr *)NULL, NULL)) < 1)
     {
         debug_print_int(new_socket);
