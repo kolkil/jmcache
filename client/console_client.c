@@ -7,6 +7,38 @@
 #include <unistd.h>
 #define PORT 2137
 
+int get_menu()
+{
+    printf("[1] - insert \"key\" \"value\"\n");
+    printf("[2] - get \"key\"\n");
+    int res = 0;
+    if (scanf("%d", &res) != 1)
+        return 0;
+    return res;
+}
+
+int insert(char buffer[2048])
+{
+    memset(buffer, 0, 2048);
+    if (scanf("%s", buffer) != 1)
+        return 0;
+    if (scanf("%s", buffer + 2048 / 3) != 1)
+        return 0;
+    if (scanf("%s", buffer + (2 * 2048) / 3))
+        return 0;
+    return 1;
+}
+
+int get(char buffer[2048])
+{
+    memset(buffer, 0, 2048);
+    if (scanf("%s", buffer) != 1)
+        return 0;
+    if (scanf("%s", buffer + 2048 / 2) != 1)
+        return 0;
+    return 1;
+}
+
 int main()
 {
     struct sockaddr_in address;
@@ -27,43 +59,44 @@ int main()
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_port = htons(PORT);
 
-        // Convert IPv4 and IPv6 addresses from text to binary form
         if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0)
         {
             printf("\nInvalid address/ Address not supported \n");
             return -1;
         }
 
-        char command_buffer[1024] = {0},
-             key_buffer[1024] = {0},
-             value_buffer[1024] = {0},
-             total_buffer[10024] = {0};
+        char command_buffer[2048] = {0};
 
         if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
         {
             printf("\nConnection Failed \n");
             return -1;
         }
-        int x = 0;
-        if (scanf("%s", command_buffer) != 1)
-            return 0;
-        if (scanf("%s", key_buffer) != 1)
-            return 0;
-        if (scanf("%s", value_buffer) != 1)
-            return 0;
-        sprintf(total_buffer, "%s \"%s\" \"%s\"", command_buffer, key_buffer, value_buffer);
-        printf("total_buffer - %s\n", total_buffer);
-        if (x = send(sock, total_buffer, strlen(total_buffer), 0), x < 1)
+        int x = get_menu();
+        switch (x)
+        {
+        case 1:
+            if (!insert(command_buffer))
+                break;
+            break;
+        case 2:
+            if (!get(command_buffer))
+                continue;
+            break;
+        default:
+            break;
+        }
+        for (int i = 0; i < 2047; ++i)
+            if (command_buffer[i] == 0)
+                command_buffer[i] = ' ';
+        printf("%s\n", command_buffer);
+        if (x = send(sock, command_buffer, 2048, 0), x < 1)
         {
             printf("send error %d\n", x);
             return -1;
         }
         valread = read(sock, buffer, 1024);
         printf("%s\n", buffer);
-        memset(total_buffer, 0, 1024);
-        memset(key_buffer, 0, 1024);
-        memset(value_buffer, 0, 1024);
-        memset(command_buffer, 0, 1024);
     }
     return 0;
 }
