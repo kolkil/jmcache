@@ -22,13 +22,13 @@ int write_err_close_fd_return_0(int client_fd)
 
 int execute_insert(parsed_data *parsed, hash_table *hash, int client_fd)
 {
+    debug_print(parsed->first_param.content, 2);
+    debug_print(parsed->second_param.content, 2);
+
     if (strlen(parsed->first_param.content) <= 0)
         return write_err_close_fd_return_0(client_fd);
 
     int insert_result = hash_table_insert(hash, (uint8_t *)parsed->first_param.content, (uint8_t *)parsed->second_param.content);
-
-    debug_print(parsed->first_param.content, 2);
-    debug_print(parsed->second_param.content, 2);
 
     if (insert_result)
         return write_err_close_fd_return_0(client_fd);
@@ -68,9 +68,9 @@ int react_on_input(parsed_data *parsed, hash_table *hash, int client_fd)
     switch (parsed->command)
     {
     case INSERT:
-        debug_print("INSERT", 0);
-        execute_insert(parsed, hash, client_fd);
         debug_print("INSERT", 1);
+        execute_insert(parsed, hash, client_fd);
+        debug_print("INSERT", 0);
         break;
     case GET:
         execute_get(parsed, hash, client_fd);
@@ -97,7 +97,7 @@ int read_data_send_response(hash_table *hash, int client_fd)
 
     while (1)
     {
-        res = read(client_fd, buffer, BUFFER_SIZE);
+        res = read(client_fd, buffer, BUFFER_SIZE - 1);
         if (res < 0)
         {
             debug_print("read_data_send_response", 0);
@@ -106,12 +106,13 @@ int read_data_send_response(hash_table *hash, int client_fd)
         data_len = strlen(buffer);
         for (int i = 0; i < data_len; ++i)
             vector_push_back(v, buffer[i]);
-        if (data_len <= 1023)
+        if (data_len <= 1022)
             break;
         if (res == 0)
             break;
         memset(buffer, 0, BUFFER_SIZE);
     }
+    vector_push_back(v, 0);
     debug_print(v->data, 2);
 
     parsed_data parsed = parse_data(v->data);
