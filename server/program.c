@@ -63,6 +63,47 @@ int execute_get(parsed_data *parsed, hash_table *hash, int client_fd)
     return 0;
 }
 
+int execute_pop(parsed_data *data, hash_table *hash, int client_fd)
+{
+    if (strlen(data->first_param.content) <= 0)
+        return write_err_close_fd_return_0(client_fd);
+
+    char *value = (char *)hash_table_pop(hash, (uint8_t *)data->first_param.content);
+
+    debug_print(value, 2);
+
+    if (value == NULL)
+        return write_err_close_fd_return_0(client_fd);
+
+    int value_len = strlen(value);
+
+    if (write(client_fd, value, value_len) != value_len)
+        debug_print("error during responging", 2);
+
+    close(client_fd);
+
+    return 0;
+}
+
+int execute_keys(parsed_data *data, hash_table *hash, int client_fd)
+{
+    if (strlen(data->first_param.content) <= 0)
+        return write_err_close_fd_return_0(client_fd);
+
+    char **value = (char **)hash_table_get_keys(hash);
+    for (uint32_t i = 0, len = 0; i < hash->count; ++i)
+    {
+        len = strlen(*(value + i));
+        if (write(client_fd, *(value + i), len) != len || write(client_fd, "\n", 1) != 1)
+        {
+            debug_print("error during responding", 2);
+            break;
+        }
+    }
+    close(client_fd);
+    return 0;
+}
+
 int react_on_input(parsed_data *parsed, hash_table *hash, int client_fd)
 {
     switch (parsed->command)
@@ -73,11 +114,19 @@ int react_on_input(parsed_data *parsed, hash_table *hash, int client_fd)
         debug_print("INSERT", 0);
         break;
     case GET:
+        debug_print("GET", 1);
         execute_get(parsed, hash, client_fd);
+        debug_print("GET", 0);
         break;
     case POP:
+        debug_print("POP", 1);
+        execute_pop(parsed, hash, client_fd);
+        debug_print("POP", 0);
         break;
     case KEYS:
+        debug_print("KEYS", 1);
+        execute_keys(parsed, hash, client_fd);
+        debug_print("KEYS", 0);
         break;
     case ALL:
         break;
@@ -122,13 +171,15 @@ int read_data_send_response(hash_table *hash, int client_fd)
         debug_print("error", 2);
         debug_print(parsed.error_message, 2);
         debug_print("read_data_send_response", 0);
+        write_err_close_fd_return_0(client_fd);
         close(client_fd);
+        free_parsed_data_content(&parsed);
         return -1;
     }
 
     react_on_input(&parsed, hash, client_fd);
     close(client_fd);
-
+    free_parsed_data_content(&parsed);
     debug_print("read_data_send_response", 0);
 
     return 0;

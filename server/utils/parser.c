@@ -106,3 +106,16 @@ parsed_data parse_data(char *data)
     }
     return parsed;
 }
+
+void free_parsed_data_content(parsed_data *data)
+{
+    free(data->first_param.content);
+    free(data->second_param.content);
+    free(data->error_message);
+}
+
+void free_parsed_data(parsed_data *data)
+{
+    free_parsed_data_content(data);
+    free(data);
+}

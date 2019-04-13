@@ -14,3 +14,5 @@ typedef struct
 } parsed_data;
 
 parsed_data parse_data(char *);
+void free_parsed_data(parsed_data *);
+void free_parsed_data_content(parsed_data *);
