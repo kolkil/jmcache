@@ -3,9 +3,15 @@
 typedef struct
 {
     uint32_t len;
-    uint8_t *key,
-        *data;
-} content;
+    uint8_t *content;
+} simple_string;
 
-content get_default_conetnet_value();
-content *get_default_content();
+typedef struct
+{
+    simple_string *key,
+        *value;
+} hash_table_content;
+
+hash_table_content *get_default_content();
+void free_hash_table_content(hash_table_content *);
+void free_simple_string(simple_string *);

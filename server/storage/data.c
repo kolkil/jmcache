@@ -2,20 +2,25 @@
 
 #include <stdlib.h>
 
-content get_default_conetnet_value()
+hash_table_content *get_default_content()
 {
-    content c;
-    c.data = NULL;
-    c.key = NULL;
-    c.len = 0;
+    hash_table_content *c = malloc(sizeof(hash_table_content));
+    c->key->content = NULL;
+    c->key->len = 0;
+    c->value->content = NULL;
+    c->value->len = 0;
     return c;
 }
 
-content *get_default_content()
+void free_hash_table_content(hash_table_content *a)
 {
-    content *c = malloc(sizeof(content));
-    c->data = NULL;
-    c->key = NULL;
-    c->len = 0; 
-    return c;
+    free(a->key->content);
+    free(a->value->content);
+    free(a);
+}
+
+void free_simple_string(simple_string *s)
+{
+    free(s->content);
+    free(s);
 }

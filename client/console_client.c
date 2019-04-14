@@ -76,17 +76,15 @@ int main()
         switch (x)
         {
         case 1:
-            if (!insert(command_buffer))
-                break;
+            insert(command_buffer);
             break;
         case 2:
-            if (!get(command_buffer))
-                continue;
+            get(command_buffer);
             break;
         default:
             break;
         }
-        for (int i = 0; i < 2047; ++i)
+        for (int i = 0; i < 2046; ++i)
             if (command_buffer[i] == 0)
                 command_buffer[i] = ' ';
         printf("%s\n", command_buffer);
