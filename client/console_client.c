@@ -12,5 +12,5 @@ int main(void)
         return 1;
     }
     query_result k = mcache_insert_strings(&params, "klucz", "wartość");
-    printf("result code : %d\n message : %s\n", k.code, k.error_message);
+    printf("result code : %d\nmessage : %s\n", k.code, k.error_message);
 }

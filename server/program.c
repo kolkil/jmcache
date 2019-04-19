@@ -78,10 +78,13 @@ int read_data_send_response(hash_table *hash, int client_fd)
     mcache_request request = read_request(client_fd);
     if (request.code != 0)
     {
+        debug_print("Error parsing request", 2);
+        debug_print_int(request.code);
+        debug_print_int(request.header.command);
         debug_print("read_data_send_response", 0);
         return 0;
     }
-
+    debug_print_int((int)request.header.command);
     int result = do_job(hash, request, client_fd);
 
     debug_print("read_data_send_response", 0);
