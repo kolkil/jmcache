@@ -20,8 +20,8 @@ enum
 {
     NO_DATA = 0,
     VALUE = 1,
-    KEYS = 2,
-    ALL = 3
+    RKEYS = 2,
+    RALL = 3
 } RESPONSE_TYPE;
 
 /*

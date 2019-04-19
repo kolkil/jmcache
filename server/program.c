@@ -13,25 +13,43 @@
 
 int execute_insert(hash_table *hash, mcache_request request, int client_fd)
 {
-    int insert_result = hash_table_insert(hash, request.key, request.data);
+    simple_string key,
+        data;
+    key.content = request.key;
+    key.len = request.header.key_len;
+    data.content = request.data;
+    data.len = request.header.data_len;
+
+    mcache_response_header header;
+    header.info = OK;
+    header.items_count = 0;
+    header.response_type = NO_DATA;
+
+    int insert_result = hash_table_insert(hash, &key, &data);
     if (insert_result)
     {
-        send_response_header(ERROR, NO_DATA, 0);
+        header.info = ERROR;
+        send_response_header(client_fd, header);
         return 1;
     }
-    send_response_header(OK, NO_DATA, 0);
+    send_response_header(client_fd, header);
     return 0;
 }
 
 int execute_get(hash_table *hash, mcache_request request, int client_fd)
 {
-    char *value = (char *)hash_table_get(hash, request.key);
-    if (value == NULL)
-    {
-        send_response_header(OK, NO_DATA, 0);
-        return 0;
-    }
-    return 0;
+    simple_string key;
+    key.content = request.key;
+    key.len = request.header.key_len;
+
+    mcache_response_header header;
+    header.info = OK;
+    header.response_type = VALUE;
+    header.items_count = 1;
+
+    simple_string *value = hash_table_get(hash, &key);
+    send_response_header(client_fd, header);
+    return send_response(client_fd, value->content, value->len);
 }
 
 int do_job(hash_table *hash, mcache_request request, int client_fd)
@@ -39,14 +57,19 @@ int do_job(hash_table *hash, mcache_request request, int client_fd)
     switch (request.header.command)
     {
     case INSERT:
+        debug_print("INSERT", 1);
         execute_insert(hash, request, client_fd);
+        debug_print("INSERT", 0);
         break;
     case GET:
-
+        debug_print("GET", 1);
+        execute_get(hash, request, client_fd);
+        debug_print("GET", 0);
         break;
     default:
         break;
     }
+    return 0;
 }
 
 int read_data_send_response(hash_table *hash, int client_fd)
@@ -63,7 +86,7 @@ int read_data_send_response(hash_table *hash, int client_fd)
 
     debug_print("read_data_send_response", 0);
 
-    return 0;
+    return result;
 }
 
 int start_program(config_values *cnf)

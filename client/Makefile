@@ -6,8 +6,11 @@ all: main clean
 debug: CFLAGS += -DDEBUG
 debug: all
 
-main: console_client.c
-	$(CC) $(CFLAGS) console_client.c -o console_client.out
+main: lib.o console_client.c
+	$(CC) $(CFLAGS)  mcache_client.o console_client.c -o console_client.out
+
+lib.o:
+	$(CC) $(CFLAGS) -c lib/*
 
 clean:
 	rm -f *.o; rm -f *.gch; rm -f ./*/*.gch;

@@ -98,3 +98,10 @@ mcache_request read_request(int client_fd)
     }
     return request;
 }
+
+int send_response(int client_fd, uint8_t *data, uint32_t len)
+{
+    if (write(client_fd, data, len) != len)
+        return 1;
+    return 0;
+}

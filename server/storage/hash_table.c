@@ -90,7 +90,6 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
         if (!sstrings_compare(c->data->key, key))
         {
             free_hash_table_content(c->data);
-            free_simple_string(key);
             linked_container_set_data(c, data);
             return 0;
         }

@@ -1,5 +1,4 @@
 #include "mcache_client.h"
-#include "vector.h"
 
 #include <stdio.h>
 #include <sys/socket.h>
@@ -33,7 +32,7 @@ connection_params mcache_connect(char *address, int port)
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
 
-    if (server_socket = socket(AF_INET, SOCK_STREAM, 0) <= 0)
+    if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) <= 0)
     {
         params.server_fd = -1;
         return params;
@@ -62,19 +61,19 @@ void close_and_reset(connection_params *params)
 
 int send_request_header(connection_params *params, mcache_request_header header)
 {
-    if (write(params->server_fd, header.command, sizeof(uint8_t) != sizeof(uint8_t)))
+    if (write(params->server_fd, &header.command, sizeof(uint8_t) != sizeof(uint8_t)))
     {
         close_and_reset(params);
         return -1;
     }
 
-    if (write(params->server_fd, header.key_len, sizeof(uint32_t)) != sizeof(uint32_t))
+    if (write(params->server_fd, &header.key_len, sizeof(uint32_t)) != sizeof(uint32_t))
     {
         close_and_reset(params);
         return -1;
     }
 
-    if (write(params->server_fd, header.data_len, sizeof(uint32_t)) != sizeof(uint32_t))
+    if (write(params->server_fd, &header.data_len, sizeof(uint32_t)) != sizeof(uint32_t))
     {
         close_and_reset(params);
         return -1;
@@ -114,7 +113,7 @@ mcache_response_header read_response_header(connection_params *params)
     return response;
 }
 
-get_result read_get_result(connection_params *params, mcache_response_header header)
+get_result read_get_result(connection_params *params)
 {
     get_result result;
     result.result.code = 0;
@@ -168,14 +167,14 @@ query_result mcache_insert(connection_params *params, data_and_length key, data_
         return result;
     }
 
-    if (send_data(params, key) != key.length)
+    if (send_data(params, key) == -1)
     {
         result.code = 3;
         result.error_message = alloc_string("Error during sending key");
         return result;
     }
 
-    if (send_data(params, value) != value.length)
+    if (send_data(params, value) == -1)
     {
         result.code = 4;
         result.error_message = alloc_string("Error during sending value");
@@ -217,7 +216,7 @@ get_result mcache_get(connection_params *params, data_and_length key)
         return result;
     }
 
-    if (send_data(params, key) != key.length)
+    if (send_data(params, key) == -1)
     {
         get_result result;
         result.result.code = 4;
@@ -235,6 +234,15 @@ get_result mcache_get(connection_params *params, data_and_length key)
         return result;
     }
 
-    get_result result = read_get_result(params, response_header);
+    get_result result = read_get_result(params);
+    return result;
+}
+
+query_result mcache_insert_strings(connection_params *params, char *key, char *value)
+{
+    data_and_length d_key = {(uint8_t *)key, (uint32_t)strlen(key)};
+    data_and_length d_value = {(uint8_t *)value, (uint32_t)strlen(value)};
+
+    query_result result = mcache_insert(params, d_key, d_value);
     return result;
 }
