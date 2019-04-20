@@ -6,12 +6,5 @@ typedef struct
     uint8_t *content;
 } simple_string;
 
-typedef struct
-{
-    simple_string *key,
-        *value;
-} hash_table_content;
-
-hash_table_content *get_default_content();
-void free_hash_table_content(hash_table_content *);
 void free_simple_string(simple_string *);
+simple_string *simple_string_new(uint8_t *, uint32_t);

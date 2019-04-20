@@ -2,21 +2,12 @@
 
 #include <stdlib.h>
 
-hash_table_content *get_default_content()
+simple_string *simple_string_new(uint8_t *str, uint32_t len)
 {
-    hash_table_content *c = malloc(sizeof(hash_table_content));
-    c->key->content = NULL;
-    c->key->len = 0;
-    c->value->content = NULL;
-    c->value->len = 0;
-    return c;
-}
-
-void free_hash_table_content(hash_table_content *a)
-{
-    free(a->key->content);
-    free(a->value->content);
-    free(a);
+    simple_string *s = calloc(sizeof(simple_string), 1);
+    s->content = str;
+    s->len = len;
+    return s;
 }
 
 void free_simple_string(simple_string *s)

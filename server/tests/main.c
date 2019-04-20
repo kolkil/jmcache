@@ -11,22 +11,29 @@ void hash_table_test()
             dta_buffer[1024] = {0};
     while (scanf("%s %s", key_buffer, dta_buffer) == 2)
     {
-        hash_table_insert(t, key_buffer, dta_buffer);
+        simple_string key, value;
+        key.content = calloc(sizeof(uint8_t), strlen((char *)key_buffer));
+        memcpy(key.content, key_buffer, strlen((char *)key_buffer));
+        key.len = strlen((char *)key_buffer);
+        value.content = calloc(sizeof(uint8_t), strlen((char *)dta_buffer));
+        memcpy(key.content, dta_buffer, strlen((char *)dta_buffer));
+        value.len = strlen((char *)dta_buffer);
+        hash_table_insert(t, &key, &value);
     }
     printf("Test print\n");
     hash_table_print(t);
     printf("Test keys\n");
-    uint8_t **keys = hash_table_get_keys(t),
-            *tmp;
+    simple_string *keys = hash_table_get_keys(t),
+                  *tmp;
     for (uint32_t i = 0; i < t->count; ++i)
     {
-        tmp = hash_table_pop(t, keys[i]);
+        tmp = hash_table_pop(t, &keys[i]);
         printf("%s\t%s\n", keys[i], tmp);
         free(tmp);
-        tmp = hash_table_pop(t, keys[i]);
-        printf("%s\t%s\n", keys[i], tmp);
+        tmp = hash_table_pop(t, &keys[i]);
+        printf("%s\t%s\n", keys[i].content, tmp);
         free(tmp);
-        free(keys[i]);
+        free(&keys[i]);
     }
     free(keys);
     free_hash_table(t);

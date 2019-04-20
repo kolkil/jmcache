@@ -13,19 +13,16 @@
 
 int execute_insert(hash_table *hash, mcache_request request, int client_fd)
 {
-    simple_string key,
-        data;
-    key.content = request.key;
-    key.len = request.header.key_len;
-    data.content = request.data;
-    data.len = request.header.data_len;
+    simple_string *key = simple_string_new(request.key, request.header.key_len),
+                  *data = simple_string_new(request.data, request.header.data_len);
 
     mcache_response_header header;
     header.info = OK;
     header.items_count = 0;
     header.response_type = NO_DATA;
-
-    int insert_result = hash_table_insert(hash, &key, &data);
+    debug_print("hash_table_insert", 1);
+    int insert_result = hash_table_insert(hash, key, data);
+    debug_print("hash_table_insert", 0);
     if (insert_result)
     {
         header.info = ERROR;
@@ -79,8 +76,7 @@ int read_data_send_response(hash_table *hash, int client_fd)
     if (request.code != 0)
     {
         debug_print("Error parsing request", 2);
-        debug_print_int(request.code);
-        debug_print_int(request.header.command);
+        debug_print_int((int)request.header.command);
         debug_print("read_data_send_response", 0);
         return 0;
     }
@@ -114,6 +110,7 @@ int start_program(config_values *cnf)
             continue;
         }
         tmp = read_data_send_response(hash, client_fd);
+        close(client_fd);
         if (tmp < 0)
         {
             debug_print("Error", 2);

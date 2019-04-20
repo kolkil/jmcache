@@ -8,17 +8,13 @@ struct linked_container
 {
     linked_container *next,
         *prev;
-    hash_table_content *data;
+    simple_string *key,
+        *value;
 };
 
 typedef struct
 {
-
-} hash_table_element;
-
-typedef struct
-{
-    linked_container *elements[1021];
+    linked_container *elements[PRIME_LENGTH];
     uint32_t filled,
         count;
 } hash_table;
@@ -31,5 +27,5 @@ uint16_t get_hash(uint8_t *, uint32_t);
 int hash_table_insert(hash_table *, simple_string *, simple_string *);
 simple_string *hash_table_get(hash_table *, simple_string *);
 simple_string *hash_table_pop(hash_table *, simple_string *);
-simple_string **hash_table_get_keys(hash_table *);
+simple_string *hash_table_get_keys(hash_table *);
 void hash_table_print(hash_table *);

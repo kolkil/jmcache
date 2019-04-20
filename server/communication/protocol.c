@@ -9,15 +9,16 @@
 mcache_request_header read_request_header(int client_fd)
 {
     mcache_request_header header;
-    if (
-        read(client_fd, &header.command, sizeof(uint8_t)) != sizeof(uint8_t) ||
-        read(client_fd, &header.key_len, sizeof(uint32_t) != sizeof(uint32_t)) ||
-        read(client_fd, &header.data_len, sizeof(uint32_t) != sizeof(uint32_t)))
+    uint8_t buffer[9] = {0};
+    if (read(client_fd, buffer, 9) != 9)
     {
         close(client_fd);
         header.command = UNKNOWN;
         return header;
     }
+    header.command = buffer[0];
+    header.key_len = *(uint32_t *)&buffer[1];
+    header.data_len = *(uint32_t *)&buffer[5];
     return header;
 }
 

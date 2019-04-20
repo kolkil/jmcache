@@ -39,7 +39,8 @@ linked_container *get_linked_container()
         return NULL;
     c->next = NULL;
     c->prev = NULL;
-    c->data = get_default_content();
+    c->key = NULL;
+    c->value = NULL;
     return c;
 }
 
@@ -51,15 +52,15 @@ uint8_t *get_new_copy(uint8_t *source)
     return new;
 }
 
-void linked_container_set_data(linked_container *c, simple_string *data)
+void linked_container_set_value(linked_container *c, simple_string *data)
 {
-    c->data->value = data;
+    c->value = data;
 }
 
 void set_linked_container_content(linked_container *c, simple_string *key, simple_string *data)
 {
-    c->data->key = key;
-    c->data->value = data;
+    c->key = key;
+    c->value = data;
 }
 
 linked_container *get_and_set_linked_container(simple_string *key, simple_string *data)
@@ -87,10 +88,11 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
     linked_container *c = table->elements[hash];
     for (;;)
     {
-        if (!sstrings_compare(c->data->key, key))
+        if (!sstrings_compare(c->key, key))
         {
-            free_hash_table_content(c->data);
-            linked_container_set_data(c, data);
+            free_simple_string(c->key);
+            free_simple_string(c->value);
+            set_linked_container_content(c, key, data);
             return 0;
         }
         if (c->next == NULL)
@@ -114,9 +116,9 @@ simple_string *hash_table_get(hash_table *table, simple_string *key)
     linked_container *c = table->elements[hash];
     for (;;)
     {
-        if (!sstrings_compare(c->data->key, key))
+        if (!sstrings_compare(c->key, key))
         {
-            return c->data->value;
+            return c->value;
         }
         if (c->next == NULL)
             break;
@@ -133,9 +135,9 @@ simple_string *hash_table_pop(hash_table *table, simple_string *key)
     linked_container *c = table->elements[hash];
     for (;;)
     {
-        if (!strcmp((char *)c->data->key, (char *)key))
+        if (!strcmp((char *)c->key, (char *)key))
         {
-            simple_string *tmp = c->data->value;
+            simple_string *tmp = c->value;
             if (c->prev == NULL)
             {
                 linked_container *tmp_lc = c->next;
@@ -166,9 +168,9 @@ simple_string *hash_table_pop(hash_table *table, simple_string *key)
     return NULL;
 }
 
-simple_string **hash_table_get_keys(hash_table *t)
+simple_string *hash_table_get_keys(hash_table *t)
 {
-    simple_string **keys = calloc(t->count, sizeof(uint8_t *));
+    simple_string *keys = calloc(t->count, sizeof(uint8_t *));
     for (uint32_t i = 0, k = 0; i < PRIME_LENGTH; ++i)
     {
         if (t->elements[i] == NULL)
@@ -176,10 +178,10 @@ simple_string **hash_table_get_keys(hash_table *t)
         linked_container *c = t->elements[i];
         for (; c->next != NULL; ++k)
         {
-            keys[k] = c->data->key;
+            keys[k] = *c->key;
             c = c->next;
         }
-        keys[k] = c->data->key;
+        keys[k] = *c->key;
         ++k;
     }
     return keys;
@@ -194,7 +196,7 @@ void hash_table_print(hash_table *table)
             linked_container *c = table->elements[i];
             for (; c != NULL;)
             {
-                printf("%s\t%s\n", (char *)c->data->key->content, (char *)c->data->value->content);
+                printf("%s\t%s\n", (char *)c->key->content, (char *)c->value->content);
                 c = c->next;
             }
         }
@@ -204,7 +206,8 @@ void hash_table_print(hash_table *table)
 
 void free_linked_container(linked_container *c)
 {
-    free_hash_table_content(c->data);
+    free_simple_string(c->key);
+    free_simple_string(c->value);
     free(c);
 }
 

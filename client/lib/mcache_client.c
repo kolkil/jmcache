@@ -61,7 +61,7 @@ void close_and_reset(connection_params *params)
 
 int send_request_header(connection_params *params, mcache_request_header header)
 {
-    if (write(params->server_fd, &header.command, sizeof(uint8_t) != sizeof(uint8_t)))
+    if (write(params->server_fd, &header.command, sizeof(uint8_t)) != sizeof(uint8_t))
     {
         close_and_reset(params);
         return -1;
@@ -245,4 +245,10 @@ query_result mcache_insert_strings(connection_params *params, char *key, char *v
 
     query_result result = mcache_insert(params, d_key, d_value);
     return result;
+}
+
+get_result mcache_get_strings(connection_params *params, char *key)
+{
+    data_and_length d_key = {(uint8_t *)key, (uint32_t)strlen(key)};
+    return mcache_get(params, d_key);
 }
