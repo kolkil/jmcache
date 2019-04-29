@@ -45,8 +45,10 @@ int execute_get(hash_table *hash, mcache_request request, int client_fd)
     header.items_count = 1;
 
     simple_string *value = hash_table_get(hash, &key);
+    debug_print((char *)value->content, 2);
     send_response_header(client_fd, header);
-    return send_response(client_fd, value->content, value->len);
+    send_data(client_fd, (uint8_t *)&value->len, sizeof(value->len));
+    return send_data(client_fd, value->content, value->len);
 }
 
 int do_job(hash_table *hash, mcache_request request, int client_fd)
@@ -85,6 +87,16 @@ int read_data_send_response(hash_table *hash, int client_fd)
 
     debug_print("read_data_send_response", 0);
 
+    return !result;
+}
+
+int deal_with_client(hash_table *hash, int client_fd)
+{
+    int result = 1;
+    while (result)
+    {
+        result = read_data_send_response(hash, client_fd);
+    }
     return result;
 }
 
@@ -109,7 +121,7 @@ int start_program(config_values *cnf)
             debug_print("Could not estabilish connection", 2);
             continue;
         }
-        tmp = read_data_send_response(hash, client_fd);
+        tmp = deal_with_client(hash, client_fd);
         close(client_fd);
         if (tmp < 0)
         {

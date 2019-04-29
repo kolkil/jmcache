@@ -5,27 +5,49 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <netdb.h>
+
+int send_data(int client_fd, uint8_t *data, uint32_t len)
+{
+    for (int sent = 0;;)
+    {
+        sent = send(client_fd, data + sent, len - sent, 0);
+        if (sent == -1)
+            return 0;
+        if ((uint32_t)sent == len)
+            return 1;
+    }
+    return 0;
+}
 
 mcache_request_header read_request_header(int client_fd)
 {
+    debug_print("read_request_header", 1);
     mcache_request_header header;
     uint8_t buffer[9] = {0};
-    if (read(client_fd, buffer, 9) != 9)
+    int tmp = 0;
+    if ((tmp = recv(client_fd, buffer, 9, 0)) != 9)
     {
-        close(client_fd);
         header.command = UNKNOWN;
+        debug_print_int(tmp);
+        debug_print_int(buffer[0]);
+        debug_print_int(*(int *)&buffer[1]);
+        debug_print_int(*(int *)&buffer[5]);
+        debug_print("read_request_header", 0);
         return header;
     }
     header.command = buffer[0];
     header.key_len = *(uint32_t *)&buffer[1];
     header.data_len = *(uint32_t *)&buffer[5];
+    debug_print_int(header.command);
+    debug_print("read_request_header", 0);
     return header;
 }
 
 uint8_t *read_from_client(int clien_fd, uint32_t len)
 {
     uint8_t *tmp = calloc(sizeof(uint8_t), len);
-    if (read(clien_fd, tmp, len) != len)
+    if (recv(clien_fd, tmp, len, 0) != len)
     {
         free(tmp);
         return NULL;
@@ -35,21 +57,14 @@ uint8_t *read_from_client(int clien_fd, uint32_t len)
 
 int send_response_header(int client_fd, mcache_response_header header)
 {
-    if (write(client_fd, &header.info, sizeof(uint8_t)) != sizeof(uint8_t))
-    {
-        close(client_fd);
+    uint8_t header_data[6] = {0};
+    header_data[0] = header.info;
+    header_data[1] = header.response_type;
+    uint32_t *rest_of_header = (uint32_t*)(header_data + 2);
+    rest_of_header[0] = header.items_count;
+
+    if(!send_data(client_fd, header_data, 6))
         return 1;
-    }
-    if (write(client_fd, &header.response_type, sizeof(uint8_t)) != sizeof(uint8_t))
-    {
-        close(client_fd);
-        return 1;
-    }
-    if (write(client_fd, &header.items_count, sizeof(uint32_t)) != sizeof(uint32_t))
-    {
-        close(client_fd);
-        return 1;
-    }
 
     return 0;
 }
@@ -98,11 +113,4 @@ mcache_request read_request(int client_fd)
         return request;
     }
     return request;
-}
-
-int send_response(int client_fd, uint8_t *data, uint32_t len)
-{
-    if (write(client_fd, data, len) != len)
-        return 1;
-    return 0;
 }

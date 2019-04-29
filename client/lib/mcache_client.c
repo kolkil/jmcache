@@ -61,29 +61,24 @@ void close_and_reset(connection_params *params)
 
 int send_request_header(connection_params *params, mcache_request_header header)
 {
-    if (write(params->server_fd, &header.command, sizeof(uint8_t)) != sizeof(uint8_t))
+    uint8_t header_data[9] = {0};
+    header_data[0] = header.command;
+    uint32_t *rest_of_header = (uint32_t*)(header_data + 1);
+    rest_of_header[0] = header.key_len;
+    rest_of_header[1] = header.data_len;
+
+    if (send(params->server_fd, header_data, 9, MSG_NOSIGNAL) != 9)
     {
         close_and_reset(params);
         return -1;
     }
 
-    if (write(params->server_fd, &header.key_len, sizeof(uint32_t)) != sizeof(uint32_t))
-    {
-        close_and_reset(params);
-        return -1;
-    }
-
-    if (write(params->server_fd, &header.data_len, sizeof(uint32_t)) != sizeof(uint32_t))
-    {
-        close_and_reset(params);
-        return -1;
-    }
     return 0;
 }
 
 int send_data(connection_params *params, data_and_length data)
 {
-    if (write(params->server_fd, data.data, data.length) != data.length)
+    if (send(params->server_fd, data.data, data.length, MSG_NOSIGNAL) != data.length)
     {
         close_and_reset(params);
         return -1;

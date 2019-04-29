@@ -76,4 +76,4 @@ typedef struct
 mcache_request read_request(int);
 int send_response_header(int, mcache_response_header);
 int send_get_response(int, int, data_and_length);
-int send_response(int, uint8_t *, uint32_t);
+int send_data(int, uint8_t *, uint32_t);
