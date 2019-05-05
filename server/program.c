@@ -1,8 +1,6 @@
 #include "program.h"
 #include "communication/socket.h"
-#include "communication/protocol.h"
-#include "storage/vector.h"
-#include "storage/hash_table.h"
+#include "communication/jobs.h"
 #include "utils/debug_print.h"
 
 #include <stdint.h>
@@ -10,46 +8,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-
-int execute_insert(hash_table *hash, mcache_request request, int client_fd)
-{
-    simple_string *key = simple_string_new(request.key, request.header.key_len),
-                  *data = simple_string_new(request.data, request.header.data_len);
-
-    mcache_response_header header;
-    header.info = OK;
-    header.items_count = 0;
-    header.response_type = NO_DATA;
-    debug_print("hash_table_insert", 1);
-    int insert_result = hash_table_insert(hash, key, data);
-    debug_print("hash_table_insert", 0);
-    if (insert_result)
-    {
-        header.info = ERROR;
-        send_response_header(client_fd, header);
-        return 1;
-    }
-    send_response_header(client_fd, header);
-    return 0;
-}
-
-int execute_get(hash_table *hash, mcache_request request, int client_fd)
-{
-    simple_string key;
-    key.content = request.key;
-    key.len = request.header.key_len;
-
-    mcache_response_header header;
-    header.info = OK;
-    header.response_type = VALUE;
-    header.items_count = 1;
-
-    simple_string *value = hash_table_get(hash, &key);
-    debug_print((char *)value->content, 2);
-    send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value->len, sizeof(value->len));
-    return send_data(client_fd, value->content, value->len);
-}
 
 int do_job(hash_table *hash, mcache_request request, int client_fd)
 {
@@ -64,6 +22,21 @@ int do_job(hash_table *hash, mcache_request request, int client_fd)
         debug_print("GET", 1);
         execute_get(hash, request, client_fd);
         debug_print("GET", 0);
+        break;
+    case POP:
+        debug_print("POP", 1);
+        execute_pop(hash, request, client_fd);
+        debug_print("POP", 0);
+        break;
+    case KEYS:
+        debug_print("KEYS", 1);
+        execute_keys(hash, client_fd);
+        debug_print("KEYS", 0);
+        break;
+    case ALL:
+        debug_print("ALL", 1);
+        execute_get(hash, request, client_fd);
+        debug_print("ALL", 0);
         break;
     default:
         break;

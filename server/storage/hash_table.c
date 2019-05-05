@@ -137,7 +137,7 @@ simple_string *hash_table_pop(hash_table *table, simple_string *key)
     {
         if (!strcmp((char *)c->key, (char *)key))
         {
-            simple_string *tmp = c->value;
+            simple_string *result = simple_string_new(c->value->content, c->value->len);
             if (c->prev == NULL)
             {
                 linked_container *tmp_lc = c->next;
@@ -159,7 +159,7 @@ simple_string *hash_table_pop(hash_table *table, simple_string *key)
                 tmp_lcp->next = tmp_lcn;
                 tmp_lcn->prev = tmp_lcp;
             }
-            return tmp;
+            return result;
         }
         if (c->next == NULL)
             break;
@@ -170,7 +170,7 @@ simple_string *hash_table_pop(hash_table *table, simple_string *key)
 
 simple_string *hash_table_get_keys(hash_table *t)
 {
-    simple_string *keys = calloc(t->count, sizeof(uint8_t *));
+    simple_string *keys = calloc(t->count, sizeof(simple_string));
     for (uint32_t i = 0, k = 0; i < PRIME_LENGTH; ++i)
     {
         if (t->elements[i] == NULL)
