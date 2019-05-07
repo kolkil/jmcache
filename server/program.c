@@ -30,12 +30,43 @@ int deal_with_client(hash_table *hash, int client_fd)
 int dealer_thread(void *data)
 {
     thread_data *t_data = (thread_data *)data;
-    int result = deal_with_client(t_data->hash, t_data->fd);
+    deal_with_client(t_data->hash, t_data->fd);
     close(t_data->fd);
-    if (result < 0)
-        debug_print("Error", 2);
     t_data->busy = 2;
     return 0;
+}
+
+int join_completed_threads(thrd_t *threads, thread_data *t_data)
+{
+    for (int k = 0; k < THREADS_NUM; ++k)
+    {
+        if (t_data[k].busy == 2)
+        {
+            thrd_join(threads[k], NULL);
+            t_data[k].busy = 0;
+        }
+    }
+    return 0;
+}
+
+int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_fd)
+{
+    for (int k = 0; k < THREADS_NUM; ++k)
+    {
+        join_completed_threads(threads, t_data);
+        if (t_data[k].busy)
+            continue;
+        t_data[k].fd = client_fd;
+        if (thrd_create(&threads[k], dealer_thread, &t_data[k]) != thrd_success)
+        {
+            debug_print("Could not create thread", 2);
+            close(t_data[k].fd);
+            return -1;
+        }
+        t_data[k].busy = 1;
+        return k;
+    }
+    return -1;
 }
 
 int start_program(config_values *cnf)
@@ -49,41 +80,39 @@ int start_program(config_values *cnf)
     thrd_t t_ids[THREADS_NUM];
     thread_data threads_data[THREADS_NUM];
 
+    for (int i = 0; i < THREADS_NUM; ++i) //set default values
+    {
+        threads_data[i].hash = hash;
+        threads_data[i].fd = -1;
+        threads_data[i].busy = 0;
+    }
+
     debug_print("main loop", 1);
 
-    for (unsigned long long int i = 0;; ++i)
+    for (unsigned long long int request_counter = 0;; ++request_counter)
     {
         debug_print_raw("REQUEST");
-        debug_print_raw_int(i);
+        debug_print_raw_int(request_counter);
+
         client_fd = socket_listen_and_accept(params);
+
         if (client_fd <= 0)
         {
             debug_print("Could not estabilish connection", 2);
             continue;
         }
-        for (int k = 0; k < THREADS_NUM; ++k)
+
+        for (int flag = -1; flag == -1;) //try to create thread for client
         {
-            if (threads_data[k].busy)
-                continue;
-            threads_data[k].hash = hash;
-            threads_data[k].fd = client_fd;
-            if (thrd_create(&t_ids[k], dealer_thread, &threads_data[k]) != thrd_success)
+            flag = create_thread_for_request(t_ids, threads_data, client_fd);
+            if (flag != -1)
             {
-                debug_print("Could not create thread", 2);
-                close(threads_data[k].fd);
-                break;
-            }
-            threads_data[k].busy = 1;
-            break;
-        }
-        for (int k = 0; k < THREADS_NUM; ++k)
-        {
-            if (threads_data[k].busy == 2)
-            {
-                thrd_join(t_ids[k], NULL);
-                threads_data[k].busy = 0;
+                debug_print_raw_int(flag);
+                debug_print_raw("\n");
             }
         }
+
+        join_completed_threads(t_ids, threads_data);
     }
 
     debug_print("main loop", 0);

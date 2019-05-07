@@ -4,6 +4,14 @@
 #include <string.h>
 #include <stdio.h>
 
+void free_if_not_null(void *ptr)
+{
+    if (ptr == NULL)
+        return;
+    free(ptr);
+    ptr = NULL;
+}
+
 int sstrings_compare(simple_string *a, simple_string *b)
 {
     if (a->len != b->len)
@@ -90,9 +98,9 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
     {
         if (!sstrings_compare(c->key, key))
         {
-            free_simple_string(c->key);
-            free_simple_string(c->value);
-            set_linked_container_content(c, key, data);
+            // free_simple_string(c->key);
+            // free_simple_string(c->value);
+            // set_linked_container_content(c, key, data);
             return 0;
         }
         if (c->next == NULL)
@@ -208,7 +216,7 @@ void free_linked_container(linked_container *c)
 {
     free_simple_string(c->key);
     free_simple_string(c->value);
-    free(c);
+    free_if_not_null(c);
 }
 
 void free_hash_table(hash_table *table)
@@ -225,6 +233,6 @@ void free_hash_table(hash_table *table)
             c = tmp;
         }
     }
-    free(table);
+    free_if_not_null(table);
     return;
 }

@@ -22,25 +22,17 @@ int send_data(int client_fd, uint8_t *data, uint32_t len)
 
 mcache_request_header read_request_header(int client_fd)
 {
-    debug_print("read_request_header", 1);
     mcache_request_header header;
     uint8_t buffer[9] = {0};
     int tmp = 0;
     if ((tmp = recv(client_fd, buffer, 9, 0)) != 9)
     {
         header.command = UNKNOWN;
-        debug_print_int(tmp);
-        debug_print_int(buffer[0]);
-        debug_print_int(*(int *)&buffer[1]);
-        debug_print_int(*(int *)&buffer[5]);
-        debug_print("read_request_header", 0);
         return header;
     }
     header.command = buffer[0];
     header.key_len = *(uint32_t *)&buffer[1];
     header.data_len = *(uint32_t *)&buffer[5];
-    debug_print_int(header.command);
-    debug_print("read_request_header", 0);
     return header;
 }
 

@@ -40,19 +40,13 @@ socket_params *prepare_socket(char *address, int port)
 
 int socket_listen_and_accept(socket_params *params)
 {
-    debug_print("socket_listen_and_accept", 1);
     int new_socket = -1;
-    debug_print("listen", 1);
-    if (listen(params->fd, 30) < 0)
+    if (listen(params->fd, 128) < 0)
         return -1;
-    debug_print("listen", 0);
-    debug_print("accept", 1);
     if ((new_socket = accept(params->fd, (struct sockaddr *)NULL, NULL)) < 1)
     {
         debug_print_int(new_socket);
         return -1;
     }
-    debug_print("accept", 0);
-    debug_print("socket_listen_and_accept", 0);
     return new_socket;
 }
