@@ -6,6 +6,9 @@ all: main clean
 debug: CFLAGS += -DDEBUG
 debug: all
 
+prof: CFLAGS += -pg
+prof: all
+
 test: tests.o clean
 
 main: storage.o communication.o utils.o program.o main.c

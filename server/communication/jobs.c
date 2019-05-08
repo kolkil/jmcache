@@ -32,10 +32,13 @@ int execute_get(hash_table *hash, mcache_request request, int client_fd)
     header.response_type = VALUE;
     header.items_count = 1;
 
-    simple_string *value = hash_table_get(hash, &key);
+    ht_data value = hash_table_get(hash, &key);
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value->len, sizeof(value->len));
-    return send_data(client_fd, value->content, value->len);
+    send_data(client_fd, (uint8_t *)&value.string->len, sizeof(value.string->len));
+    int ret = send_data(client_fd, value.string->content, value.string->len);
+    mtx_unlock(value.lock);
+
+    return ret;
 }
 
 int execute_pop(hash_table *hash, mcache_request request, int client_fd)
@@ -49,14 +52,14 @@ int execute_pop(hash_table *hash, mcache_request request, int client_fd)
     header.response_type = VALUE;
     header.items_count = 1;
 
-    simple_string *value = hash_table_pop(hash, &key);
-
+    ht_data value = hash_table_get(hash, &key);
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value->len, sizeof(value->len));
-    int r = send_data(client_fd, value->content, value->len);
-    free_simple_string(value);
+    send_data(client_fd, (uint8_t *)&value.string->len, sizeof(value.string->len));
+    int ret = send_data(client_fd, value.string->content, value.string->len);
+    mtx_unlock(value.lock);
+    hash_table_delete(hash, &key);
 
-    return r;
+    return ret;
 }
 
 int execute_keys(hash_table *hash, int client_fd)
@@ -66,12 +69,18 @@ int execute_keys(hash_table *hash, int client_fd)
     header.response_type = RKEYS;
     header.items_count = hash->count;
 
-    simple_string *keys = hash_table_get_keys(hash);
+    ht_data *keys = hash_table_get_keys(hash);
     send_response_header(client_fd, header);
 
     for (uint32_t i = 0; i < hash->count; ++i)
-        if (!send_data(client_fd, (keys + i)->content, (keys + i)->len))
+    {
+        if (!send_data(client_fd, (keys + i)->string->content, (keys + i)->string->len))
+        {
+            mtx_unlock((keys + i)->lock);
             return 0;
+        }
+        mtx_unlock((keys + i)->lock);
+    }
 
     return 1;
 }

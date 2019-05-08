@@ -49,6 +49,7 @@ linked_container *get_linked_container()
     c->prev = NULL;
     c->key = NULL;
     c->value = NULL;
+    mtx_init(&c->lock, mtx_plain);
     return c;
 }
 
@@ -93,16 +94,24 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
         ++table->count;
         return 0;
     }
+    mtx_lock(&table->elements[hash]->lock);
     linked_container *c = table->elements[hash];
-    for (;;)
+    for (int i = 0;; ++i)
     {
+        if (i > 0)
+            mtx_lock(&c->lock);
+
         if (!sstrings_compare(c->key, key))
         {
-            // free_simple_string(c->key);
-            // free_simple_string(c->value);
-            // set_linked_container_content(c, key, data);
+            free_simple_string(c->key);
+            free_simple_string(c->value);
+            set_linked_container_content(c, key, data);
+            mtx_unlock(&c->lock);
             return 0;
         }
+
+        mtx_unlock(&c->lock);
+
         if (c->next == NULL)
             break;
         c = c->next;
@@ -115,70 +124,70 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
     return 0;
 }
 
-simple_string *hash_table_get(hash_table *table, simple_string *key)
+ht_data hash_table_get(hash_table *table, simple_string *key)
 {
+    ht_data response;
+    response.string = NULL;
+    response.lock = NULL;
     uint16_t hash = get_hash(key->content, key->len);
 
     if (table->elements[hash] == NULL)
-        return NULL;
+        return response;
+    mtx_lock(&table->elements[hash]->lock);
     linked_container *c = table->elements[hash];
-    for (;;)
+    for (int i = 0;; ++i)
     {
+        if (i > 0)
+            mtx_lock(&c->lock);
+
         if (!sstrings_compare(c->key, key))
         {
-            return c->value;
+            response.string = c->value;
+            response.lock = &c->lock;
+            return response;
         }
+
+        mtx_unlock(&c->lock);
+
         if (c->next == NULL)
             break;
         c = c->next;
     }
-    return NULL;
+    return response;
 }
 
-simple_string *hash_table_pop(hash_table *table, simple_string *key)
+int hash_table_delete(hash_table *table, simple_string *key)
 {
     uint16_t hash = get_hash(key->content, key->len);
+
     if (table->elements[hash] == NULL)
-        return NULL;
+        return 0;
+    mtx_lock(&table->elements[hash]->lock);
     linked_container *c = table->elements[hash];
-    for (;;)
+    for (int i = 0;; ++i)
     {
-        if (!strcmp((char *)c->key, (char *)key))
+        if (i > 0)
+            mtx_lock(&c->lock);
+
+        if (!sstrings_compare(c->key, key))
         {
-            simple_string *result = simple_string_new(c->value->content, c->value->len);
-            if (c->prev == NULL)
-            {
-                linked_container *tmp_lc = c->next;
-                free_linked_container(c);
-                table->elements[hash] = tmp_lc;
-                c = table->elements[hash];
-                if (c != NULL)
-                    c->prev = NULL;
-            }
-            else if (c->next == NULL)
-            {
-                free_linked_container(c);
-            }
-            else
-            {
-                linked_container *tmp_lcn = c->next,
-                                 *tmp_lcp = c->prev;
-                free_linked_container(c);
-                tmp_lcp->next = tmp_lcn;
-                tmp_lcn->prev = tmp_lcp;
-            }
-            return result;
+            c->prev->next = c->next->prev;
+            free_linked_container(c);
+            return 0;
         }
+
+        mtx_unlock(&c->lock);
+
         if (c->next == NULL)
             break;
         c = c->next;
     }
-    return NULL;
+    return 1;
 }
 
-simple_string *hash_table_get_keys(hash_table *t)
+ht_data *hash_table_get_keys(hash_table *t)
 {
-    simple_string *keys = calloc(t->count, sizeof(simple_string));
+    ht_data *keys = calloc(t->count, sizeof(ht_data));
     for (uint32_t i = 0, k = 0; i < PRIME_LENGTH; ++i)
     {
         if (t->elements[i] == NULL)
@@ -186,10 +195,12 @@ simple_string *hash_table_get_keys(hash_table *t)
         linked_container *c = t->elements[i];
         for (; c->next != NULL; ++k)
         {
-            keys[k] = *c->key;
+            keys[k].string = c->key;
+            keys[k].lock = &c->lock;
             c = c->next;
         }
-        keys[k] = *c->key;
+        keys[k].string = c->key;
+        keys[k].lock = &c->lock;
         ++k;
     }
     return keys;
@@ -216,6 +227,8 @@ void free_linked_container(linked_container *c)
 {
     free_simple_string(c->key);
     free_simple_string(c->value);
+    mtx_unlock(&c->lock);
+    mtx_destroy(&c->lock);
     free_if_not_null(c);
 }
 

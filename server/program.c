@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <threads.h>
+#include <signal.h>
 
 typedef struct
 {
@@ -16,6 +17,14 @@ typedef struct
     int fd,
         busy;
 } thread_data;
+
+static volatile int keep_running = 1;
+
+void intHandler(int dummy)
+{
+    keep_running = dummy = 0;
+    return;
+}
 
 int deal_with_client(hash_table *hash, int client_fd)
 {
@@ -69,8 +78,19 @@ int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_f
     return -1;
 }
 
+int conditional_stop()
+{
+    if (!keep_running)
+    {
+        debug_print_raw("SIGINT captured, shutting down\n");
+        return 1;
+    }
+    return 0;
+}
+
 int start_program(config_values *cnf)
 {
+    signal(SIGINT, intHandler);
     int client_fd = -1;
     socket_params *params = prepare_socket(cnf->server_address, cnf->server_port);
     hash_table *hash = get_hash_table();
@@ -91,6 +111,11 @@ int start_program(config_values *cnf)
 
     for (unsigned long long int request_counter = 0;; ++request_counter)
     {
+        if (conditional_stop())
+        {
+            join_completed_threads(t_ids, threads_data);
+            break;
+        }
         debug_print_raw("REQUEST");
         debug_print_raw_int(request_counter);
 
@@ -111,8 +136,6 @@ int start_program(config_values *cnf)
                 debug_print_raw("\n");
             }
         }
-
-        join_completed_threads(t_ids, threads_data);
     }
 
     debug_print("main loop", 0);
