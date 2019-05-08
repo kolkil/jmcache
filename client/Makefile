@@ -6,6 +6,9 @@ all: main clean
 debug: CFLAGS += -DDEBUG
 debug: all
 
+prof: CFLAGS += -pg
+prof: all
+
 main: lib.o console_client.c
 	$(CC) $(CFLAGS)  mcache_client.o console_client.c -o console_client.out
 

@@ -31,8 +31,16 @@ int execute_get(hash_table *hash, mcache_request request, int client_fd)
     header.info = OK;
     header.response_type = VALUE;
     header.items_count = 1;
-
+    // debug_print("hash table get", 1);
     ht_data value = hash_table_get(hash, &key);
+    // debug_print("hash table get", 0);
+    if (value.string == NULL)
+    {
+        header.response_type = NO_DATA;
+        header.items_count = 0;
+        send_response_header(client_fd, header);
+        return 1;
+    }
     send_response_header(client_fd, header);
     send_data(client_fd, (uint8_t *)&value.string->len, sizeof(value.string->len));
     int ret = send_data(client_fd, value.string->content, value.string->len);

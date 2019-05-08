@@ -63,7 +63,7 @@ int send_request_header(connection_params *params, mcache_request_header header)
 {
     uint8_t header_data[9] = {0};
     header_data[0] = header.command;
-    uint32_t *rest_of_header = (uint32_t*)(header_data + 1);
+    uint32_t *rest_of_header = (uint32_t *)(header_data + 1);
     rest_of_header[0] = header.key_len;
     rest_of_header[1] = header.data_len;
 
@@ -226,6 +226,15 @@ get_result mcache_get(connection_params *params, data_and_length key)
         get_result result;
         result.result.code = 5;
         result.result.error_message = alloc_string("Server returned error");
+        return result;
+    }
+
+    if (response_header.response_type == NO_DATA)
+    {
+        get_result result;
+        result.data.data = NULL;
+        result.data.length = 0;
+        result.result.code = 0;
         return result;
     }
 
