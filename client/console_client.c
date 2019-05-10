@@ -29,6 +29,7 @@ int select_command()
     printf("[1] insert\n");
     printf("[2] get\n");
     printf("[3] pop\n");
+    printf("[4] keys\n");
     printf(": ");
     int choi = -1;
     if (scanf("%d", &choi) != 1)
@@ -58,6 +59,7 @@ int main(void)
         int command = select_command();
         query_result qr;
         get_result gr;
+        keys_result kr;
         switch (command)
         {
         case INSERT:
@@ -87,6 +89,14 @@ int main(void)
             gr = mcache_pop_strings(&params, key);
             printf("\"%.*s\"\n", gr.data.length, gr.data.data);
             printf("code %d\nmessage %s\n", gr.result.code, gr.result.error_message);
+            break;
+
+        case KEYS:
+            kr = mcache_keys(&params);
+            for (int i = 0; i < kr.count; ++i)
+            {
+                printf("%.*s\n", kr.keys[i].length, kr.keys[i].data);
+            }
             break;
 
         default:

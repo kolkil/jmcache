@@ -108,6 +108,30 @@ mcache_response_header read_response_header(connection_params *params)
     return response;
 }
 
+data_and_length read_data_and_length(connection_params *params)
+{
+    data_and_length data;
+    data.data = NULL;
+    data.length = 0;
+
+    uint32_t data_len = 0;
+    if (read(params->server_fd, &data_len, sizeof(uint32_t)) != sizeof(uint32_t))
+    {
+        return data;
+    }
+
+    data.length = data_len;
+
+    data.data = calloc(sizeof(uint8_t), data_len);
+    if (read(params->server_fd, data.data, data_len) != data_len)
+    {
+        data.length = 0;
+        free(data.data);
+        return data;
+    }
+    return data;
+}
+
 get_result read_get_result(connection_params *params)
 {
     get_result result;
@@ -315,4 +339,47 @@ get_result mcache_pop_strings(connection_params *params, char *key)
 {
     data_and_length d_key = {(uint8_t *)key, (uint32_t)strlen(key)};
     return mcache_pop(params, d_key);
+}
+
+keys_result mcache_keys(connection_params *params)
+{
+    mcache_request_header header;
+    header.command = KEYS;
+    header.key_len = 0;
+    header.data_len = 0;
+
+    if (send_request_header(params, header) != 0)
+    {
+        keys_result result;
+        result.result.code = 2;
+        result.result.error_message = alloc_string("Error during sending header");
+        return result;
+    }
+
+    mcache_response_header response_header = read_response_header(params);
+
+    if (response_header.info != OK)
+    {
+        keys_result result;
+        result.result.code = 5;
+        result.result.error_message = alloc_string("Server returned error");
+        return result;
+    }
+
+    if (response_header.response_type == NO_DATA)
+    {
+        keys_result result;
+        result.result.code = 0;
+        return result;
+    }
+
+    keys_result result;
+    result.keys = calloc(response_header.items_count, sizeof(response_header));
+    result.count = response_header.items_count;
+
+    for (int i = 0; i < response_header.items_count; ++i)
+    {
+        result.keys[i] = read_data_and_length(params);
+    }
+    return result;
 }

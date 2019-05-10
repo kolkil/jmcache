@@ -71,7 +71,7 @@ int execute_pop(hash_table *hash, mcache_request request, int client_fd)
     send_data(client_fd, (uint8_t *)&value.string->len, sizeof(value.string->len));
     int ret = send_data(client_fd, value.string->content, value.string->len);
     mtx_unlock(value.lock);
-    
+
     hash_table_delete(hash, &key);
 
     return ret;
@@ -89,6 +89,11 @@ int execute_keys(hash_table *hash, int client_fd)
 
     for (uint32_t i = 0; i < hash->count; ++i)
     {
+        if (!send_data(client_fd, (uint8_t *)&(keys + i)->string->len, sizeof(uint32_t)))
+        {
+            mtx_unlock((keys + i)->lock);
+            return 0;
+        }
         if (!send_data(client_fd, (keys + i)->string->content, (keys + i)->string->len))
         {
             mtx_unlock((keys + i)->lock);

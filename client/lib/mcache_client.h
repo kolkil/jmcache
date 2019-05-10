@@ -23,13 +23,15 @@ typedef struct
 typedef struct
 {
     query_result result;
-    data_and_length **keys;
+    data_and_length *keys;
+    int count;
 } keys_result;
 
 typedef struct
 {
     query_result result;
-    data_and_length ***all_data;
+    data_and_length **all_data;
+    int count;
 } all_result;
 
 connection_params mcache_connect(char *, int);
