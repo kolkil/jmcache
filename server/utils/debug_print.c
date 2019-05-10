@@ -58,3 +58,15 @@ void debug_print_raw_int(int msg)
         msg = 1;
     return;
 }
+
+void debug_print_raw_string_int(char *str, int v)
+{
+#ifdef DEBUG
+    printf("%s %d\n", str, v);
+#endif
+    if (v == 1)
+        v = 1;
+    if (str == NULL)
+        str = NULL;
+    return;
+}

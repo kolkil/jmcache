@@ -52,10 +52,10 @@ int send_response_header(int client_fd, mcache_response_header header)
     uint8_t header_data[6] = {0};
     header_data[0] = header.info;
     header_data[1] = header.response_type;
-    uint32_t *rest_of_header = (uint32_t*)(header_data + 2);
+    uint32_t *rest_of_header = (uint32_t *)(header_data + 2);
     rest_of_header[0] = header.items_count;
 
-    if(!send_data(client_fd, header_data, 6))
+    if (!send_data(client_fd, header_data, 6))
         return 1;
 
     return 0;

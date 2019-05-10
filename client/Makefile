@@ -9,8 +9,11 @@ debug: all
 prof: CFLAGS += -pg
 prof: all
 
-main: lib.o console_client.c
+main: lib.o console_client.c simple_insert
 	$(CC) $(CFLAGS)  mcache_client.o console_client.c -o console_client.out
+
+simple_insert: lib.o simple_insert.c
+	$(CC) $(CFLAGS) mcache_client.o simple_insert.c -o simple_insert.out
 
 lib.o:
 	$(CC) $(CFLAGS) -c lib/*

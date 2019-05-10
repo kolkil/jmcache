@@ -18,6 +18,7 @@ int execute_insert(hash_table *hash, mcache_request request, int client_fd)
         return 1;
     }
     send_response_header(client_fd, header);
+    debug_print_raw_string_int("Inserted", hash->count);
     return 0;
 }
 
@@ -31,9 +32,7 @@ int execute_get(hash_table *hash, mcache_request request, int client_fd)
     header.info = OK;
     header.response_type = VALUE;
     header.items_count = 1;
-    // debug_print("hash table get", 1);
     ht_data value = hash_table_get(hash, &key);
-    // debug_print("hash table get", 0);
     if (value.string == NULL)
     {
         header.response_type = NO_DATA;
