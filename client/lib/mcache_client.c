@@ -256,3 +256,63 @@ get_result mcache_get_strings(connection_params *params, char *key)
     data_and_length d_key = {(uint8_t *)key, (uint32_t)strlen(key)};
     return mcache_get(params, d_key);
 }
+
+get_result mcache_pop(connection_params *params, data_and_length key)
+{
+    if (key.length == 0)
+    {
+        get_result result;
+        result.result.code = 1;
+        result.result.error_message = alloc_string("Key length cannot be 0");
+        return result;
+    }
+
+    mcache_request_header header;
+    header.command = POP;
+    header.key_len = key.length;
+    header.data_len = 0;
+
+    if (send_request_header(params, header) != 0)
+    {
+        get_result result;
+        result.result.code = 2;
+        result.result.error_message = alloc_string("Error during sending header");
+        return result;
+    }
+
+    if (send_data(params, key) == -1)
+    {
+        get_result result;
+        result.result.code = 4;
+        result.result.error_message = alloc_string("Error during sending value");
+        return result;
+    }
+
+    mcache_response_header response_header = read_response_header(params);
+
+    if (response_header.info != OK)
+    {
+        get_result result;
+        result.result.code = 5;
+        result.result.error_message = alloc_string("Server returned error");
+        return result;
+    }
+
+    if (response_header.response_type == NO_DATA)
+    {
+        get_result result;
+        result.data.data = NULL;
+        result.data.length = 0;
+        result.result.code = 0;
+        return result;
+    }
+
+    get_result result = read_get_result(params);
+    return result;
+}
+
+get_result mcache_pop_strings(connection_params *params, char *key)
+{
+    data_and_length d_key = {(uint8_t *)key, (uint32_t)strlen(key)};
+    return mcache_pop(params, d_key);
+}

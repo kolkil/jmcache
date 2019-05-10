@@ -28,6 +28,7 @@ int select_command()
 {
     printf("[1] insert\n");
     printf("[2] get\n");
+    printf("[3] pop\n");
     printf(": ");
     int choi = -1;
     if (scanf("%d", &choi) != 1)
@@ -78,6 +79,16 @@ int main(void)
             printf("\"%.*s\"\n", gr.data.length, gr.data.data);
             printf("code %d\nmessage %s\n", gr.result.code, gr.result.error_message);
             break;
+
+        case POP:
+            printf("put key: ");
+            if (scanf("%s", key) != 1)
+                return 1;
+            gr = mcache_pop_strings(&params, key);
+            printf("\"%.*s\"\n", gr.data.length, gr.data.data);
+            printf("code %d\nmessage %s\n", gr.result.code, gr.result.error_message);
+            break;
+
         default:
             return 1;
             break;
