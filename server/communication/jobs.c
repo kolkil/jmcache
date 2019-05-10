@@ -60,10 +60,18 @@ int execute_pop(hash_table *hash, mcache_request request, int client_fd)
     header.items_count = 1;
 
     ht_data value = hash_table_get(hash, &key);
+    if (value.string == NULL)
+    {
+        header.response_type = NO_DATA;
+        header.items_count = 0;
+        send_response_header(client_fd, header);
+        return 1;
+    }
     send_response_header(client_fd, header);
     send_data(client_fd, (uint8_t *)&value.string->len, sizeof(value.string->len));
     int ret = send_data(client_fd, value.string->content, value.string->len);
     mtx_unlock(value.lock);
+    
     hash_table_delete(hash, &key);
 
     return ret;

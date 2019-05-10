@@ -1,4 +1,5 @@
 #include "hash_table.h"
+#include "../utils/debug_print.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -171,8 +172,26 @@ int hash_table_delete(hash_table *table, simple_string *key)
 
         if (!sstrings_compare(c->key, key))
         {
-            c->prev->next = c->next->prev;
+            if (c->prev == NULL && c->next != NULL) //first
+            {
+                linked_container *tmp = c->next;
+                free_linked_container(c);
+                table->elements[hash] = tmp;
+                return 0;
+            }
+            else if (c->prev != NULL && c->next != NULL) //middle
+            {
+                linked_container *tmp_prev = c->prev,
+                                 *tmp_next = c->next;
+                free_linked_container(c);
+                tmp_prev->next = tmp_next;
+                tmp_next->prev = tmp_prev;
+                return 0;
+            }
+            //last
             free_linked_container(c);
+            if (i == 0)
+                table->elements[hash] = NULL;
             return 0;
         }
 
