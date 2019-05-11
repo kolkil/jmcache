@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
-#include "lib/mcache_client.h"
+#include "../lib/mcache_client.h"
 
 #define MAX_KEY_SIZE 128
 #define MAX_VALUE_SIZE 128
@@ -37,10 +38,15 @@ int select_command()
     return choi;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     connection_params params;
-    if (menu_and_initialization(&params) != 1)
+
+    if (argc == 3)
+    {
+        params = mcache_connect(argv[1], atoi(argv[2]));
+    }
+    else if (menu_and_initialization(&params) != 1)
     {
         printf("error\n");
         return 1;
@@ -95,7 +101,10 @@ int main(void)
             kr = mcache_keys(&params);
             for (int i = 0; i < kr.count; ++i)
             {
+                if (kr.keys[i].length == 0 || kr.keys[i].data == NULL)
+                    continue;
                 printf("%.*s\n", kr.keys[i].length, kr.keys[i].data);
+                // free(kr.keys[i].data);
             }
             break;
 

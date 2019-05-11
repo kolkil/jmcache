@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib/mcache_client.h"
+#include "../lib/mcache_client.h"
 
 #define BUFFER_SIZE 1024
 

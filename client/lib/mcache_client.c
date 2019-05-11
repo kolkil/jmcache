@@ -122,7 +122,7 @@ data_and_length read_data_and_length(connection_params *params)
 
     data.length = data_len;
 
-    data.data = calloc(sizeof(uint8_t), data_len);
+    data.data = calloc(data_len, sizeof(uint8_t));
     if (read(params->server_fd, data.data, data_len) != data_len)
     {
         data.length = 0;
