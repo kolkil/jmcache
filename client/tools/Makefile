@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O3 -std=c11
 
-all: main
+all: main clean
 
 debug: CFLAGS += -DDEBUG
 debug: all
