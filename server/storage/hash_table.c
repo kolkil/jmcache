@@ -177,6 +177,7 @@ int hash_table_delete(hash_table *table, simple_string *key)
                 linked_container *tmp = c->next;
                 free_linked_container(c);
                 table->elements[hash] = tmp;
+                --table->count;
                 return 0;
             }
             else if (c->prev != NULL && c->next != NULL) //middle
@@ -186,10 +187,13 @@ int hash_table_delete(hash_table *table, simple_string *key)
                 free_linked_container(c);
                 tmp_prev->next = tmp_next;
                 tmp_next->prev = tmp_prev;
+                --table->count;
                 return 0;
             }
-            //last
+            //last or only
             free_linked_container(c);
+            --table->count;
+            --table->filled;
             if (i == 0)
                 table->elements[hash] = NULL;
             return 0;
@@ -215,10 +219,12 @@ ht_data *hash_table_get_keys(hash_table *t)
         for (; c->next != NULL; ++k)
         {
             keys[k].string = c->key;
+            mtx_lock(&c->lock);
             keys[k].lock = &c->lock;
             c = c->next;
         }
         keys[k].string = c->key;
+        mtx_lock(&c->lock);
         keys[k].lock = &c->lock;
         ++k;
     }

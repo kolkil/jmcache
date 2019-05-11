@@ -1,6 +1,8 @@
 #include "jobs.h"
 #include "../utils/debug_print.h"
 
+#include <stdlib.h>
+
 int execute_insert(hash_table *hash, mcache_request request, int client_fd)
 {
     simple_string *key = simple_string_new(request.key, request.header.key_len),
@@ -89,19 +91,29 @@ int execute_keys(hash_table *hash, int client_fd)
 
     for (uint32_t i = 0; i < hash->count; ++i)
     {
+        if ((keys + i)->string == NULL)
+        {
+            if ((keys + i)->lock != NULL)
+                mtx_unlock((keys + i)->lock);
+            continue;
+        }
+
         if (!send_data(client_fd, (uint8_t *)&(keys + i)->string->len, sizeof(uint32_t)))
         {
             mtx_unlock((keys + i)->lock);
+            free(keys);
             return 0;
         }
-        if (!send_data(client_fd, (keys + i)->string->content, (keys + i)->string->len))
+
+        if ((keys + i)->string->content != NULL && !send_data(client_fd, (keys + i)->string->content, (keys + i)->string->len))
         {
             mtx_unlock((keys + i)->lock);
+            free(keys);
             return 0;
         }
         mtx_unlock((keys + i)->lock);
     }
-
+    free(keys);
     return 1;
 }
 
