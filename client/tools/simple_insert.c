@@ -49,6 +49,6 @@ int main(int argc, char **argv)
         memset(value_buffer, 0, BUFFER_SIZE);
     }
     print_exit_message(i);
-    printf("avg time for insert = %fs", (float)(total_time / i + 1) / (1000 * 1000));
+    printf("avg time for insert = %fs\n", (float)(total_time / i + 1) / (1000 * 1000));
     return 0;
 }
