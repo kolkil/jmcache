@@ -12,7 +12,7 @@ struct linked_container
         *prev;
     simple_string *key,
         *value;
-    mtx_t lock;
+    // mtx_t lock;
 };
 
 typedef struct
@@ -20,6 +20,7 @@ typedef struct
     linked_container *elements[PRIME_LENGTH];
     uint32_t filled,
         count;
+    mtx_t general_lock;
 } hash_table;
 
 typedef struct

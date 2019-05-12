@@ -45,6 +45,7 @@ hash_table *get_hash_table()
 
     table->count = 0;
     table->filled = 0;
+    mtx_init(&table->general_lock, mtx_plain);
 
     return table;
 }
@@ -60,7 +61,6 @@ linked_container *get_linked_container()
     c->prev = NULL;
     c->key = NULL;
     c->value = NULL;
-    mtx_init(&c->lock, mtx_plain);
 
     return c;
 }
@@ -95,13 +95,10 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
         return 0;
     }
 
-    mtx_lock(&table->elements[hash]->lock);
     linked_container *c = table->elements[hash];
 
     for (int i = 0;; ++i)
     {
-        if (i > 0)
-            mtx_lock(&c->lock);
 
         if (!sstrings_compare(c->key, key))
         {
@@ -109,18 +106,12 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
             free_simple_string(c->value);
             c->key = key;
             c->value = data;
-            mtx_unlock(&c->lock);
 
             return 0;
         }
 
-        mtx_unlock(&c->lock);
-
         if (c->next == NULL)
-        {
-            mtx_lock(&c->lock);
             break;
-        }
 
         c = c->next;
     }
@@ -132,7 +123,6 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
 
     c->next->prev = c;
     ++table->count;
-    mtx_unlock(&c->lock);
 
     return 0;
 }
@@ -146,25 +136,20 @@ ht_data hash_table_get(hash_table *table, simple_string *key)
     uint16_t hash = get_hash(key->content, key->len);
 
     if (table->elements[hash] == NULL)
+    {
         return response;
+    }
 
-    mtx_lock(&table->elements[hash]->lock);
     linked_container *c = table->elements[hash];
 
     for (int i = 0;; ++i)
     {
-        if (i > 0)
-            mtx_lock(&c->lock);
-
         if (!sstrings_compare(c->key, key))
         {
             response.string = c->value;
-            response.lock = &c->lock;
 
             return response;
         }
-
-        mtx_unlock(&c->lock);
 
         if (c->next == NULL)
             break;
@@ -182,14 +167,10 @@ int hash_table_delete(hash_table *table, simple_string *key)
     if (table->elements[hash] == NULL)
         return 0;
 
-    mtx_lock(&table->elements[hash]->lock);
     linked_container *c = table->elements[hash];
 
     for (int i = 0;; ++i)
     {
-        if (i > 0)
-            mtx_lock(&c->lock);
-
         if (!sstrings_compare(c->key, key))
         {
             if (c->prev == NULL && c->next != NULL) //first but not the only
@@ -225,12 +206,9 @@ int hash_table_delete(hash_table *table, simple_string *key)
             c->prev->next = NULL;
             free_linked_container(c);
             --table->count;
-            --table->filled;
 
             return 0;
         }
-
-        mtx_unlock(&c->lock);
 
         if (c->next == NULL)
             break;
@@ -238,7 +216,7 @@ int hash_table_delete(hash_table *table, simple_string *key)
         c = c->next;
     }
 
-    return 1;
+    return 0;
 }
 
 ht_data *hash_table_get_keys(hash_table *t)
@@ -257,23 +235,20 @@ ht_data *hash_table_get_keys(hash_table *t)
             continue;
         }
 
-        mtx_lock(&t->elements[i]->lock);
         linked_container *c = t->elements[i];
+
+        keys[k].string = NULL;
+        keys[k].lock = NULL;
 
         for (int u = 0; c->next != NULL; ++k, ++u)
         {
-            if (u > 0)
-                mtx_lock(&c->lock);
-
             keys[k].string = c->key;
-            ++keys_num;
-            keys[k].lock = &c->lock;
             c = c->next;
+            ++keys_num;
         }
 
         keys[k].string = c->key;
         ++keys_num;
-        keys[k].lock = &c->lock;
         ++k;
     }
 
@@ -308,8 +283,6 @@ void free_linked_container(linked_container *c)
 {
     free_simple_string(c->key);
     free_simple_string(c->value);
-    mtx_unlock(&c->lock);
-    mtx_destroy(&c->lock);
     free_if_not_null(c);
 }
 
@@ -330,6 +303,7 @@ void free_hash_table(hash_table *table)
         }
     }
 
+    mtx_destroy(&table->general_lock);
     free_if_not_null(table);
 
     return;
