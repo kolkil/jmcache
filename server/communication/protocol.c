@@ -11,7 +11,7 @@ int send_data(int client_fd, uint8_t *data, uint32_t len)
 {
     for (int sent = 0;;)
     {
-        sent = send(client_fd, data + sent, len - sent, 0);
+        sent = send(client_fd, data + sent, len - (uint32_t)sent, 0);
         if (sent == -1)
             return 0;
         if ((uint32_t)sent == len)
@@ -25,7 +25,7 @@ mcache_request_header read_request_header(int client_fd)
     mcache_request_header header;
     uint8_t buffer[9] = {0};
     int tmp = 0;
-    if ((tmp = recv(client_fd, buffer, 9, 0)) != 9)
+    if ((tmp = recv(client_fd, buffer, 9, MSG_NOSIGNAL)) != 9)
     {
         header.command = UNKNOWN;
         return header;
@@ -38,12 +38,15 @@ mcache_request_header read_request_header(int client_fd)
 
 uint8_t *read_from_client(int clien_fd, uint32_t len)
 {
-    uint8_t *tmp = calloc(sizeof(uint8_t), len);
-    if (recv(clien_fd, tmp, len, 0) != len)
+    // long int start_time = microtime_now();
+    uint8_t *tmp = malloc(len * sizeof(uint8_t));
+    // long int malloc_time = microtime_now();
+    if (recv(clien_fd, tmp, len, MSG_NOSIGNAL) != len)
     {
         free(tmp);
         return NULL;
     }
+    // printf("%d\t%f\t%f\t%.*s\n", (int)len, micro_to_seconds(microtime_now(), start_time), micro_to_seconds(malloc_time, start_time), (int)len, (char *)tmp);
     return tmp;
 }
 

@@ -7,6 +7,9 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <fcntl.h>
 
 socket_params *prepare_socket(char *address, int port)
 {
@@ -14,7 +17,7 @@ socket_params *prepare_socket(char *address, int port)
     socket_params *params = calloc(1, sizeof(socket_params));
     int opt = 1;
 
-    if ((params->fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    if ((params->fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == 0)
     {
         printf("socket failed");
         return params;
@@ -41,7 +44,7 @@ socket_params *prepare_socket(char *address, int port)
 int socket_listen_and_accept(socket_params *params)
 {
     int new_socket = -1;
-    if (listen(params->fd, 128) < 0)
+    if (listen(params->fd, 8) < 0)
         return -1;
     if ((new_socket = accept(params->fd, (struct sockaddr *)NULL, NULL)) < 1)
     {

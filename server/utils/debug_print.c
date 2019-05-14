@@ -1,6 +1,7 @@
 #include "debug_print.h"
 
 #include <stdio.h>
+#include <sys/time.h>
 
 void debug_print(char *msg, int v)
 {
@@ -69,4 +70,16 @@ void debug_print_raw_string_int(char *str, int v)
     if (str == NULL)
         str = NULL;
     return;
+}
+
+long int microtime_now()
+{
+    struct timeval currentTime;
+    gettimeofday(&currentTime, NULL);
+    return currentTime.tv_sec * (int)1e6 + currentTime.tv_usec;
+}
+
+float micro_to_seconds(long int a, long int b)
+{
+    return (float)(a - b) / (1000 * 1000);
 }

@@ -14,13 +14,13 @@ void free_if_not_null(void *ptr)
     ptr = NULL;
 }
 
-int sstrings_compare(simple_string *a, simple_string *b)
+int sstrings_compare(simple_string a, simple_string b)
 {
-    if (a->len != b->len)
+    if (a.len != b.len)
         return 1;
 
-    for (uint32_t i = 0; i < a->len; ++i)
-        if (a->content[i] != b->content[i])
+    for (uint32_t i = 0; i < a.len; ++i)
+        if (a.content[i] != b.content[i])
             return 1;
 
     return 0;
@@ -30,8 +30,8 @@ uint16_t get_hash(uint8_t *key, uint32_t len)
 {
     uint16_t hash = 0;
 
-    for (uint8_t i = 0; i < len; ++len)
-        hash += key[i] * 10 + i + 1;
+    for (uint32_t i = 0; i < len; ++i)
+        hash += key[i] * 10ul + i + 1;
 
     return hash % PRIME_LENGTH;
 }
@@ -59,13 +59,11 @@ linked_container *get_linked_container()
 
     c->next = NULL;
     c->prev = NULL;
-    c->key = NULL;
-    c->value = NULL;
 
     return c;
 }
 
-linked_container *get_and_set_linked_container(simple_string *key, simple_string *data)
+linked_container *get_and_set_linked_container(simple_string key, simple_string data)
 {
     linked_container *c = get_linked_container();
 
@@ -78,9 +76,9 @@ linked_container *get_and_set_linked_container(simple_string *key, simple_string
     return c;
 }
 
-int hash_table_insert(hash_table *table, simple_string *key, simple_string *data)
+int hash_table_insert(hash_table *table, simple_string key, simple_string data)
 {
-    uint16_t hash = get_hash(key->content, key->len);
+    uint16_t hash = get_hash(key.content, key.len);
 
     if (table->elements[hash] == NULL)
     {
@@ -102,8 +100,8 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
 
         if (!sstrings_compare(c->key, key))
         {
-            free_simple_string(c->key);
-            free_simple_string(c->value);
+            free_if_not_null(c->key.content);
+            free_if_not_null(c->value.content);
             c->key = key;
             c->value = data;
 
@@ -127,13 +125,12 @@ int hash_table_insert(hash_table *table, simple_string *key, simple_string *data
     return 0;
 }
 
-ht_data hash_table_get(hash_table *table, simple_string *key)
+ht_data hash_table_get(hash_table *table, simple_string key)
 {
     ht_data response;
-    response.string = NULL;
     response.lock = NULL;
 
-    uint16_t hash = get_hash(key->content, key->len);
+    uint16_t hash = get_hash(key.content, key.len);
 
     if (table->elements[hash] == NULL)
     {
@@ -160,9 +157,9 @@ ht_data hash_table_get(hash_table *table, simple_string *key)
     return response;
 }
 
-int hash_table_delete(hash_table *table, simple_string *key)
+int hash_table_delete(hash_table *table, simple_string key)
 {
-    uint16_t hash = get_hash(key->content, key->len);
+    uint16_t hash = get_hash(key.content, key.len);
 
     if (table->elements[hash] == NULL)
         return 0;
@@ -229,7 +226,7 @@ ht_data *hash_table_get_keys(hash_table *t)
         if (t->elements[i] == NULL)
             continue;
 
-        if (t->elements[i]->key == NULL)
+        if (t->elements[i]->key.content == NULL)
         {
             t->elements[i] = NULL;
             continue;
@@ -237,7 +234,6 @@ ht_data *hash_table_get_keys(hash_table *t)
 
         linked_container *c = t->elements[i];
 
-        keys[k].string = NULL;
         keys[k].lock = NULL;
 
         for (int u = 0; c->next != NULL; ++k, ++u)
@@ -270,7 +266,7 @@ void hash_table_print(hash_table *table)
 
             for (; c != NULL;)
             {
-                printf("%s\t%s\n", (char *)c->key->content, (char *)c->value->content);
+                printf("%s\t%s\n", (char *)c->key.content, (char *)c->value.content);
                 c = c->next;
             }
         }
@@ -281,8 +277,8 @@ void hash_table_print(hash_table *table)
 
 void free_linked_container(linked_container *c)
 {
-    free_simple_string(c->key);
-    free_simple_string(c->value);
+    free_if_not_null(c->key.content);
+    free_if_not_null(c->value.content);
     free_if_not_null(c);
 }
 

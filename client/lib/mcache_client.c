@@ -94,7 +94,7 @@ mcache_response_header read_response_header(connection_params *params)
     response.items_count = 0;
 
     uint8_t header[6] = {0};
-    if (read(params->server_fd, header, 6) != 6)
+    if (recv(params->server_fd, header, 6, MSG_NOSIGNAL) != 6)
     {
         close_and_reset(params);
         response.info = UNKNOWN_ERROR;
@@ -115,7 +115,7 @@ data_and_length read_data_and_length(connection_params *params)
     data.length = 0;
 
     uint32_t data_len = 0;
-    if (read(params->server_fd, &data_len, sizeof(uint32_t)) != sizeof(uint32_t))
+    if (recv(params->server_fd, &data_len, sizeof(uint32_t), MSG_NOSIGNAL) != sizeof(uint32_t))
     {
         return data;
     }
@@ -123,7 +123,7 @@ data_and_length read_data_and_length(connection_params *params)
     data.length = data_len;
 
     data.data = calloc(data_len, sizeof(uint8_t));
-    if (read(params->server_fd, data.data, data_len) != data_len)
+    if (recv(params->server_fd, data.data, data_len, MSG_NOSIGNAL) != data_len)
     {
         data.length = 0;
         free(data.data);
@@ -139,7 +139,7 @@ get_result read_get_result(connection_params *params)
     result.result.error_message = NULL;
 
     uint32_t data_len = 0;
-    if (read(params->server_fd, &data_len, sizeof(uint32_t)) != sizeof(uint32_t))
+    if (recv(params->server_fd, &data_len, sizeof(uint32_t), MSG_NOSIGNAL) != sizeof(uint32_t))
     {
         close_and_reset(params);
         result.result.code = 1;
@@ -148,7 +148,7 @@ get_result read_get_result(connection_params *params)
     }
 
     uint8_t *readed_data = calloc(sizeof(uint8_t), data_len);
-    if (read(params->server_fd, readed_data, data_len) != data_len)
+    if (recv(params->server_fd, readed_data, data_len, MSG_NOSIGNAL) != data_len)
     {
         close_and_reset(params);
         result.result.code = 2;
