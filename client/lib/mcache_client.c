@@ -186,19 +186,25 @@ query_result mcache_insert(connection_params *params, data_and_length key, data_
         return result;
     }
 
-    if (send_data(params, key) == -1)
+    data_and_length all_data;
+    all_data.data = malloc((key.length + value.length) * sizeof(uint8_t));
+    all_data.length = key.length + value.length;
+    memcpy(all_data.data, key.data, key.length);
+    memcpy(all_data.data + key.length, value.data, value.length);
+    printf("%d\n", all_data.length);
+    if (send_data(params, all_data) == -1)
     {
         result.code = 3;
         result.error_message = alloc_string("Error during sending key");
         return result;
     }
 
-    if (send_data(params, value) == -1)
-    {
-        result.code = 4;
-        result.error_message = alloc_string("Error during sending value");
-        return result;
-    }
+    // if (send_data(params, value) == -1)
+    // {
+    // result.code = 4;
+    // result.error_message = alloc_string("Error during sending value");
+    // return result;
+    // }
 
     mcache_response_header response = read_response_header(params);
 
