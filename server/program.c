@@ -1,7 +1,7 @@
 #include "program.h"
 #include "communication/socket.h"
-#include "communication/jobs.h"
 #include "utils/debug_print.h"
+#include "storage/static_file.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -45,7 +45,7 @@ int dealer_thread(void *data)
     return 0;
 }
 
-int join_completed_threads(thrd_t *threads, thread_data *t_data)
+int join_completed_dealer_threads(thrd_t *threads, thread_data *t_data)
 {
     for (int k = 0; k < THREADS_NUM; ++k)
     {
@@ -62,7 +62,7 @@ int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_f
 {
     for (int k = 0; k < THREADS_NUM; ++k)
     {
-        join_completed_threads(threads, t_data);
+        join_completed_dealer_threads(threads, t_data);
         if (t_data[k].busy)
             continue;
         t_data[k].fd = client_fd;
@@ -113,7 +113,7 @@ int start_program(config_values *cnf)
     {
         if (conditional_stop())
         {
-            join_completed_threads(t_ids, threads_data);
+            join_completed_dealer_threads(t_ids, threads_data);
             break;
         }
         debug_print_raw("REQUEST");
@@ -137,6 +137,10 @@ int start_program(config_values *cnf)
             }
         }
     }
+
+    FILE *f = fopen(cnf->save_path, "w+b");
+    save_to_file(fileno(f), hash);
+    fclose(f);
 
     debug_print("main loop", 0);
 
