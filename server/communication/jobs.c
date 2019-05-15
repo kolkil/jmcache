@@ -5,8 +5,6 @@
 
 int execute_insert(hash_table *hash, mcache_request request, int client_fd)
 {
-    // simple_string *key = simple_string_new(request.key, request.header.key_len),
-    //   *data = simple_string_new(request.data, request.header.data_len);
     simple_string key,
         data;
     key.content = request.key;
@@ -47,9 +45,9 @@ int execute_get(hash_table *hash, mcache_request request, int client_fd)
     header.items_count = 1;
 
     mtx_lock(&hash->general_lock);
-    ht_data value = hash_table_get(hash, key);
+    simple_string value = hash_table_get(hash, key);
 
-    if (value.string.content == NULL)
+    if (value.content == NULL)
     {
         header.response_type = NO_DATA;
         header.items_count = 0;
@@ -60,8 +58,8 @@ int execute_get(hash_table *hash, mcache_request request, int client_fd)
     }
 
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value.string.len, sizeof(value.string.len));
-    int ret = send_data(client_fd, value.string.content, value.string.len);
+    send_data(client_fd, (uint8_t *)&value.len, sizeof(value.len));
+    int ret = send_data(client_fd, value.content, value.len);
     mtx_unlock(&hash->general_lock);
 
     return ret;
@@ -79,9 +77,9 @@ int execute_pop(hash_table *hash, mcache_request request, int client_fd)
     header.items_count = 1;
 
     mtx_lock(&hash->general_lock);
-    ht_data value = hash_table_get(hash, key);
+    simple_string value = hash_table_get(hash, key);
 
-    if (value.string.content == NULL)
+    if (value.content == NULL)
     {
         header.response_type = NO_DATA;
         header.items_count = 0;
@@ -92,8 +90,8 @@ int execute_pop(hash_table *hash, mcache_request request, int client_fd)
     }
 
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value.string.len, sizeof(value.string.len));
-    int ret = send_data(client_fd, value.string.content, value.string.len);
+    send_data(client_fd, (uint8_t *)&value.len, sizeof(value.len));
+    int ret = send_data(client_fd, value.content, value.len);
     hash_table_delete(hash, key);
     mtx_unlock(&hash->general_lock);
 
@@ -108,18 +106,18 @@ int execute_keys(hash_table *hash, int client_fd)
     header.items_count = hash->count;
 
     mtx_lock(&hash->general_lock);
-    ht_data *keys = hash_table_get_keys(hash);
+    simple_string *keys = hash_table_get_keys(hash);
     send_response_header(client_fd, header);
 
     for (uint32_t i = 0; i < hash->count; ++i)
     {
-        if (keys[i].string.content == NULL)
+        if (keys[i].content == NULL)
         {
             debug_print_raw_string_int("execute keys error, null-key value given at i = ", i);
             continue;
         }
 
-        if (!send_data(client_fd, (uint8_t *)&(keys[i].string.len), sizeof(uint32_t)))
+        if (!send_data(client_fd, (uint8_t *)&(keys[i].len), sizeof(uint32_t)))
         {
             free(keys);
             debug_print("execute_keys error sending key size", 0);
@@ -128,7 +126,7 @@ int execute_keys(hash_table *hash, int client_fd)
             return 0;
         }
 
-        if (keys[i].string.content != NULL && !send_data(client_fd, keys[i].string.content, keys[i].string.len))
+        if (keys[i].content != NULL && !send_data(client_fd, keys[i].content, keys[i].len))
         {
             free(keys);
             debug_print("execute_keys error sending key", 0);
@@ -139,6 +137,83 @@ int execute_keys(hash_table *hash, int client_fd)
     }
 
     free(keys);
+    mtx_unlock(&hash->general_lock);
+
+    return 1;
+}
+
+int execute_all(hash_table *hash, int client_fd)
+{
+    mcache_response_header header;
+    header.info = OK;
+    header.response_type = RALL;
+    header.items_count = hash->count;
+
+    mtx_lock(&hash->general_lock);
+    simple_string **all_data = hash_table_get_all_data(hash);
+    send_response_header(client_fd, header);
+
+    for (uint32_t i = 0; i < hash->count; ++i)
+    {
+        if (all_data[i][0].content == NULL)
+        {
+            debug_print_raw_string_int("execute keys error, null-key value given at i = ", i);
+            continue;
+        }
+
+        if (!send_data(client_fd, (uint8_t *)&(all_data[i][0].len), sizeof(uint32_t))) //send key len
+        {
+            for (uint32_t c = 0; c < hash->count; ++c)
+                free(all_data[c]);
+
+            free(all_data);
+            debug_print("execute_keys error sending key size", 0);
+            mtx_unlock(&hash->general_lock);
+
+            return 0;
+        }
+
+        if (!send_data(client_fd, all_data[i][0].content, all_data[i][0].len)) //send key
+        {
+            for (uint32_t c = 0; c < hash->count; ++c)
+                free(all_data[c]);
+
+            free(all_data);
+            debug_print("execute_keys error sending key", 0);
+            mtx_unlock(&hash->general_lock);
+
+            return 0;
+        }
+
+        if (!send_data(client_fd, (uint8_t *)&(all_data[i][1].len), sizeof(uint32_t))) //send key len
+        {
+            for (uint32_t c = 0; c < hash->count; ++c)
+                free(all_data[c]);
+
+            free(all_data);
+            debug_print("execute_keys error sending key size", 0);
+            mtx_unlock(&hash->general_lock);
+
+            return 0;
+        }
+
+        if (!send_data(client_fd, all_data[i][1].content, all_data[i][1].len)) //send value
+        {
+            for (uint32_t c = 0; c < hash->count; ++c)
+                free(all_data[c]);
+
+            free(all_data);
+            debug_print("execute_keys error sending key", 0);
+            mtx_unlock(&hash->general_lock);
+
+            return 0;
+        }
+    }
+
+    for (uint32_t c = 0; c < hash->count; ++c)
+        free(all_data[c]);
+
+    free(all_data);
     mtx_unlock(&hash->general_lock);
 
     return 1;
@@ -161,7 +236,7 @@ int do_job(hash_table *hash, mcache_request request, int client_fd)
         execute_keys(hash, client_fd);
         break;
     case ALL:
-        execute_get(hash, request, client_fd);
+        execute_all(hash, client_fd);
         break;
     default:
         break;

@@ -125,10 +125,10 @@ int hash_table_insert(hash_table *table, simple_string key, simple_string data)
     return 0;
 }
 
-ht_data hash_table_get(hash_table *table, simple_string key)
+simple_string hash_table_get(hash_table *table, simple_string key)
 {
-    ht_data response;
-    response.lock = NULL;
+    simple_string response;
+    response.content = NULL;
 
     uint16_t hash = get_hash(key.content, key.len);
 
@@ -142,11 +142,7 @@ ht_data hash_table_get(hash_table *table, simple_string key)
     for (int i = 0;; ++i)
     {
         if (!sstrings_compare(c->key, key))
-        {
-            response.string = c->value;
-
-            return response;
-        }
+            return c->value;
 
         if (c->next == NULL)
             break;
@@ -216,9 +212,9 @@ int hash_table_delete(hash_table *table, simple_string key)
     return 0;
 }
 
-ht_data *hash_table_get_keys(hash_table *t)
+simple_string *hash_table_get_keys(hash_table *t)
 {
-    ht_data *keys = calloc(t->count, sizeof(ht_data));
+    simple_string *keys = calloc(t->count, sizeof(simple_string));
     uint32_t keys_num = 0;
 
     for (uint32_t i = 0, k = 0; i < PRIME_LENGTH; ++i)
@@ -234,16 +230,14 @@ ht_data *hash_table_get_keys(hash_table *t)
 
         linked_container *c = t->elements[i];
 
-        keys[k].lock = NULL;
-
         for (int u = 0; c->next != NULL; ++k, ++u)
         {
-            keys[k].string = c->key;
+            keys[k] = c->key;
             c = c->next;
             ++keys_num;
         }
 
-        keys[k].string = c->key;
+        keys[k] = c->key;
         ++keys_num;
         ++k;
     }
@@ -254,6 +248,50 @@ ht_data *hash_table_get_keys(hash_table *t)
     }
 
     return keys;
+}
+
+simple_string **hash_table_get_all_data(hash_table *t)
+{
+    simple_string **all_data = calloc(t->count, sizeof(simple_string *));
+    
+    for (uint32_t i = 0; i < t->count; ++i)
+        all_data[i] = calloc(2, sizeof(simple_string));
+
+    uint32_t keys_num = 0;
+
+    for (uint32_t i = 0, k = 0; i < PRIME_LENGTH; ++i)
+    {
+        if (t->elements[i] == NULL)
+            continue;
+
+        if (t->elements[i]->key.content == NULL)
+        {
+            t->elements[i] = NULL;
+            continue;
+        }
+
+        linked_container *c = t->elements[i];
+
+        for (int u = 0; c->next != NULL; ++k, ++u)
+        {
+            all_data[k][0] = c->key;
+            all_data[k][1] = c->value;
+            c = c->next;
+            ++keys_num;
+        }
+
+        all_data[k][0] = c->key;
+        all_data[k][1] = c->value;
+        ++keys_num;
+        ++k;
+    }
+
+    if (keys_num != t->count) //error
+    {
+        debug_print_raw("hash_table_get_all_data error, found less keys than t->count");
+    }
+
+    return all_data;
 }
 
 void hash_table_print(hash_table *table)

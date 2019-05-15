@@ -374,12 +374,58 @@ keys_result mcache_keys(connection_params *params)
     }
 
     keys_result result;
-    result.keys = calloc(response_header.items_count, sizeof(response_header));
+    result.keys = calloc(response_header.items_count, sizeof(data_and_length));
     result.count = response_header.items_count;
 
-    for (int i = 0; i < response_header.items_count; ++i)
+    for (uint32_t i = 0; i < response_header.items_count; ++i)
     {
         result.keys[i] = read_data_and_length(params);
+    }
+    return result;
+}
+
+all_result mcache_all(connection_params *params)
+{
+    mcache_request_header header;
+    header.command = ALL;
+    header.key_len = 0;
+    header.data_len = 0;
+
+    all_result result;
+
+    if (send_request_header(params, header) != 0)
+    {
+        result.result.code = 2;
+        result.result.error_message = alloc_string("Error during sending header");
+        return result;
+    }
+
+    mcache_response_header response_header = read_response_header(params);
+
+    if (response_header.info != OK)
+    {
+        result.result.code = 5;
+        result.result.error_message = alloc_string("Server returned error");
+        return result;
+    }
+
+    if (response_header.response_type == NO_DATA)
+    {
+        result.result.code = 0;
+        return result;
+    }
+
+    result.all_data = calloc(response_header.items_count, sizeof(data_and_length *));
+
+    for (uint32_t i = 0; i < response_header.items_count; ++i)
+        result.all_data[i] = calloc(2, sizeof(data_and_length));
+
+    result.count = response_header.items_count;
+
+    for (uint32_t i = 0; i < response_header.items_count; ++i)
+    {
+        result.all_data[i][0] = read_data_and_length(params);
+        result.all_data[i][1] = read_data_and_length(params);
     }
     return result;
 }

@@ -31,6 +31,7 @@ int select_command()
     printf("[2] get\n");
     printf("[3] pop\n");
     printf("[4] keys\n");
+    printf("[5] all\n");
     printf(": ");
     int choi = -1;
     if (scanf("%d", &choi) != 1)
@@ -66,6 +67,7 @@ int main(int argc, char **argv)
         query_result qr;
         get_result gr;
         keys_result kr;
+        all_result ar;
         switch (command)
         {
         case INSERT:
@@ -106,6 +108,17 @@ int main(int argc, char **argv)
                 printf("%.*s\n", kr.keys[i].length, kr.keys[i].data);
                 // free(kr.keys[i].data);
             }
+            free(kr.keys);
+            break;
+
+        case ALL:
+            ar = mcache_all(&params);
+            for (int i = 0; i < ar.count; ++i)
+            {
+                printf("%.*s\t%.*s\n", ar.all_data[i][0].length, ar.all_data[i][0].data, ar.all_data[i][1].length, ar.all_data[i][1].data);
+                free(ar.all_data[i]);
+            }
+            free(ar.all_data);
             break;
 
         default:
