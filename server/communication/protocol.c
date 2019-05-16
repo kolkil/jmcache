@@ -38,15 +38,14 @@ mcache_request_header read_request_header(int client_fd)
 
 uint8_t *read_from_client(int clien_fd, uint32_t len)
 {
-    long int start_time = microtime_now();
     uint8_t *tmp = malloc(len * sizeof(uint8_t));
-    long int malloc_time = microtime_now();
+
     if (recv(clien_fd, tmp, len, MSG_NOSIGNAL) != len)
     {
         free(tmp);
         return NULL;
     }
-    printf("%d\t%f\t%f\t%.*s\n", (int)len, micro_to_seconds(microtime_now(), start_time), micro_to_seconds(malloc_time, start_time), (int)len, (char *)tmp);
+    
     return tmp;
 }
 
@@ -79,10 +78,9 @@ mcache_request read_request(int client_fd)
     if (request.header.key_len == 0)
         return request;
 
-    uint8_t *recived_data = read_from_client(client_fd, request.header.key_len + request.header.data_len);
+    uint8_t *recived_data = read_from_client(client_fd, request.header.key_len);
 
     request.key = recived_data;
-    request.data = recived_data + request.header.key_len;
 
     if (request.key == NULL)
     {
@@ -98,17 +96,17 @@ mcache_request read_request(int client_fd)
     if (request.header.data_len == 0)
         return request;
 
-    // request.data = read_from_client(client_fd, request.header.data_len);
+    request.data = read_from_client(client_fd, request.header.data_len);
 
-    // if (request.data == NULL)
-    // {
-    // mcache_response_header header;
-    // header.info = ERROR;
-    // header.items_count = 0;
-    // header.response_type = NO_DATA;
-    // send_response_header(client_fd, header);
-    // request.code = 1;
-    // return request;
-    // }
+    if (request.data == NULL)
+    {
+        mcache_response_header header;
+        header.info = ERROR;
+        header.items_count = 0;
+        header.response_type = NO_DATA;
+        send_response_header(client_fd, header);
+        request.code = 1;
+        return request;
+    }
     return request;
 }

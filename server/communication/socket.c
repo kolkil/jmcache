@@ -17,17 +17,18 @@ socket_params *prepare_socket(char *address, int port)
     socket_params *params = calloc(1, sizeof(socket_params));
     int opt = 1;
 
-    if ((params->fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == 0)
+    if ((params->fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == 0)
     {
         printf("socket failed");
         return params;
     }
 
-    if (setsockopt(params->fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
+    if (setsockopt(params->fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(int)))
     {
         printf("setsockopt");
         return params;
     }
+
     params->address.sin_family = AF_INET;
     params->address.sin_addr.s_addr = inet_addr(address);
     params->address.sin_port = htons(port);
