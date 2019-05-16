@@ -65,7 +65,9 @@ int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_f
         join_completed_dealer_threads(threads, t_data);
         if (t_data[k].busy)
             continue;
+
         t_data[k].fd = client_fd;
+
         if (thrd_create(&threads[k], dealer_thread, &t_data[k]) != thrd_success)
         {
             debug_print("Could not create thread", 2);
@@ -75,6 +77,7 @@ int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_f
         t_data[k].busy = 1;
         return k;
     }
+    
     return -1;
 }
 
@@ -92,8 +95,17 @@ int start_program(config_values *cnf)
 {
     signal(SIGINT, intHandler);
     int client_fd = -1;
-    socket_params *params = prepare_socket(cnf->server_address, cnf->server_port);
     hash_table *hash = get_hash_table();
+
+    if (cnf->static_load)
+    {
+        FILE *f = fopen(cnf->save_path, "rb");
+        load_from_file(fileno(f), hash);
+        fclose(f);
+    }
+
+    socket_params *params = prepare_socket(cnf->server_address, cnf->server_port);
+
     if (params->fd <= 0)
         return params->fd;
 
@@ -116,6 +128,7 @@ int start_program(config_values *cnf)
             join_completed_dealer_threads(t_ids, threads_data);
             break;
         }
+    
         debug_print_raw("REQUEST");
         debug_print_raw_int(request_counter);
 
@@ -130,6 +143,7 @@ int start_program(config_values *cnf)
         for (int flag = -1; flag == -1;) //try to create thread for client
         {
             flag = create_thread_for_request(t_ids, threads_data, client_fd);
+    
             if (flag != -1)
             {
                 debug_print_raw_int(flag);
@@ -138,9 +152,12 @@ int start_program(config_values *cnf)
         }
     }
 
-    FILE *f = fopen(cnf->save_path, "w+b");
-    save_to_file(fileno(f), hash);
-    fclose(f);
+    if (cnf->static_save)
+    {
+        FILE *f = fopen(cnf->save_path, "w+b");
+        save_to_file(fileno(f), hash);
+        fclose(f);
+    }
 
     debug_print("main loop", 0);
 

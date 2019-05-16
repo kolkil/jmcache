@@ -23,3 +23,35 @@ int save_to_file(int fd, hash_table *t)
 
     return 1;
 }
+
+int load_from_file(int fd, hash_table *t)
+{
+    if (fd <= 0)
+        return 0;
+
+    for (int32_t i = 0;; ++i)
+    {
+        simple_string key;
+
+        if (read(fd, &key.len, sizeof(uint32_t)) != sizeof(uint32_t))
+            return 0;
+
+        key.content = malloc(key.len * sizeof(uint8_t));
+
+        if (read(fd, key.content, key.len) != key.len)
+            return 0;
+
+        simple_string value;
+
+        if (read(fd, &value.len, sizeof(uint32_t)) != sizeof(uint32_t))
+            return 0;
+
+        value.content = malloc(value.len * sizeof(uint8_t));
+
+        if (read(fd, value.content, value.len) != value.len)
+            return 0;
+
+        hash_table_insert(t, key, value);
+    }
+    return 0;
+}

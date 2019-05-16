@@ -1,5 +1,5 @@
 static_save	yes
-static_load	yes
+static_load	no
 static_file	./ssave.tdb
 
 server_address  127.0.0.1
