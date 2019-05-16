@@ -18,7 +18,9 @@ int execute_insert(hash_table *hash, mcache_request request, int client_fd)
     header.response_type = NO_DATA;
 
     mtx_lock(&hash->general_lock);
+    debug_print("hash_table_insert", 1);
     int insert_result = hash_table_insert(hash, key, data);
+    debug_print("hash_table_insert", 0);
     mtx_unlock(&hash->general_lock);
 
     if (insert_result)

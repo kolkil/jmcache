@@ -7,6 +7,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <netinet/tcp.h>
 
 char *alloc_string(char *str)
 {
@@ -24,7 +25,8 @@ connection_params mcache_connect(char *address, int port)
 
     memcpy(params.address, address, strlen(address));
 
-    int server_socket = 0;
+    int server_socket = 0,
+        opt = 1;
     struct sockaddr_in server_address;
 
     memset(&server_address, '0', sizeof(server_address));
@@ -32,7 +34,13 @@ connection_params mcache_connect(char *address, int port)
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
 
-    if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) <= 0)
+    if ((server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) <= 0)
+    {
+        params.server_fd = -1;
+        return params;
+    }
+
+    if (setsockopt(server_socket, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(int)))
     {
         params.server_fd = -1;
         return params;
@@ -49,7 +57,9 @@ connection_params mcache_connect(char *address, int port)
         params.server_fd = -3;
         return params;
     }
+
     params.server_fd = server_socket;
+
     return params;
 }
 
