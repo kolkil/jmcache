@@ -1,14 +1,14 @@
-### JMCache - server
+## JMCache - server
 
-## Description
+### Description
 Server uses tcp protocol to deal with requests. All data is stored in hash table in the memory.
 
-## Compilation
+### Compilation
 To compile server in default mode type `make`  
 In debug mode server writes to its stdout some useful informations. To compile server in debug mode type `make debug`  
 If its necessary to profile the server type `make prof` and then use gprof
 
-## Configuration file
+### Configuration file
 By default server uses file `server_config.csv` wich is in the server directory  
 This is example configuration file (at the moment *config reader* does not support comments in configuration file)
 ```
