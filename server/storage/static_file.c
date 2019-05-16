@@ -19,7 +19,10 @@ int save_to_file(int fd, hash_table *t)
         k = write(fd, &all_data[i][1].len, sizeof(uint32_t));
         k = write(fd, all_data[i][1].content, all_data[i][1].len);
         k = k;
+        free(all_data[i]);
     }
+
+    free(all_data);
 
     return 1;
 }

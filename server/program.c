@@ -77,7 +77,7 @@ int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_f
         t_data[k].busy = 1;
         return k;
     }
-    
+
     return -1;
 }
 
@@ -128,7 +128,7 @@ int start_program(config_values *cnf)
             join_completed_dealer_threads(t_ids, threads_data);
             break;
         }
-    
+
         debug_print_raw("REQUEST");
         debug_print_raw_int(request_counter);
 
@@ -143,7 +143,7 @@ int start_program(config_values *cnf)
         for (int flag = -1; flag == -1;) //try to create thread for client
         {
             flag = create_thread_for_request(t_ids, threads_data, client_fd);
-    
+
             if (flag != -1)
             {
                 debug_print_raw_int(flag);
@@ -151,6 +151,8 @@ int start_program(config_values *cnf)
             }
         }
     }
+
+    join_completed_dealer_threads(t_ids, threads_data);
 
     if (cnf->static_save)
     {
@@ -160,6 +162,7 @@ int start_program(config_values *cnf)
     }
 
     debug_print("main loop", 0);
+    free_hash_table(hash);
 
     return 0;
 }
