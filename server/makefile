@@ -11,8 +11,11 @@ prof: all
 
 test: tests.o clean
 
-main: storage.o communication.o utils.o program.o logs_dealer.o main.c
-	$(CC) $(CFLAGS) static_file.o jobs.o protocol.o debug_print.o program.o vector.o hash_table.o data.o socket.o config.o options.o main.c -o mcache-server.out -lpthread
+main: storage.o communication.o utils.o program.o logs_dealer.o threading.o main.c
+	$(CC) $(CFLAGS) threading.o queue.o logger.o static_file.o jobs.o protocol.o debug_print.o program.o vector.o hash_table.o data.o socket.o config.o options.o main.c -o mcache-server.out -lpthread
+
+threading.o:
+	$(CC) $(CFLAGS) -c threading.c threading.h
 
 tests.o: storage.o
 	$(CC) $(CFLAGS) data.o hash_table.o tests/main.c -o tests.out
