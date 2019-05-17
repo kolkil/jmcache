@@ -1,7 +1,9 @@
 typedef struct
 {
     short static_save,
-        static_load;
+        static_load,
+        traffic_log,
+        error_log;
     char *save_path,
         *server_address;
     int server_port;

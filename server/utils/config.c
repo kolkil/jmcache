@@ -56,6 +56,38 @@ config_values *read_config(char *path)
 
             clean_buffer(buffer, 1024);
         }
+        else if (!strcmp(buffer, "traffic_log"))
+        {
+            debug_print("traffic_log", 1);
+
+            if (fscanf(f, "%s", buffer) != 1)
+                return NULL;
+            if (!strcmp(buffer, "yes"))
+                config->traffic_log = 1;
+            else
+                config->traffic_log = 0;
+
+            debug_print(buffer, 2);
+            debug_print("traffic_log", 0);
+
+            clean_buffer(buffer, 1024);
+        }
+        else if (!strcmp(buffer, "error_log"))
+        {
+            debug_print("error_log", 1);
+
+            if (fscanf(f, "%s", buffer) != 1)
+                return NULL;
+            if (!strcmp(buffer, "yes"))
+                config->error_log = 1;
+            else
+                config->error_log = 0;
+
+            debug_print(buffer, 2);
+            debug_print("error_log", 0);
+
+            clean_buffer(buffer, 1024);
+        }
         else if (!strcmp(buffer, "static_file"))
         {
             debug_print("static_file", 1);

@@ -3,4 +3,7 @@ static_load	no
 static_file	./ssave.tdb
 
 server_address  127.0.0.1
-server_port 2137
+server_port	2137
+
+traffic_log	yes
+error_log	yes
