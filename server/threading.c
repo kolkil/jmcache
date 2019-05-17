@@ -2,6 +2,22 @@
 #include "utils/debug_print.h"
 
 #include <unistd.h>
+#include <string.h>
+
+int traffic_logger_thread(void *data)
+{
+    logger_thread_data *ltd = (logger_thread_data *)data;
+    logger *log = logger_new(ltd->path);
+
+    if (log->fd <= 0)
+        return 1;
+
+    while (ltd->stop != 1)
+    {
+    }
+
+    return 0;
+}
 
 int deal_with_client(hash_table *hash, int client_fd)
 {
@@ -21,6 +37,7 @@ int dealer_thread(void *data)
     deal_with_client(t_data->hash, t_data->fd);
     close(t_data->fd);
     t_data->busy = 2;
+
     return 0;
 }
 
@@ -34,6 +51,7 @@ int join_completed_dealer_threads(thrd_t *threads, thread_data *t_data)
             t_data[k].busy = 0;
         }
     }
+
     return 0;
 }
 

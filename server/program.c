@@ -48,6 +48,7 @@ int start_program(config_values *cnf)
         return params->fd;
 
     thrd_t t_ids[THREADS_NUM];
+    thrd_t logger_thread;
     thread_data threads_data[THREADS_NUM];
 
     for (int i = 0; i < THREADS_NUM; ++i) //set default values
