@@ -5,12 +5,13 @@ Server uses tcp protocol to deal with requests. All data is stored in hash table
 
 ### Compilation
 To compile server in default mode type `make`  
-In debug mode server writes to its stdout some useful informations. To compile server in debug mode type `make debug`  
-If its necessary to profile the server type `make prof` and then use gprof
+In debug mode server writes to its stdout some useful informations. To compile server in debug mode type `make debug`.  
+If its necessary to profile the server type `make prof` and then use gprof.
 
 ### Configuration file
-By default server uses file `server_config.csv` wich is in the server directory  
-This is example configuration file (at the moment *config reader* does not support comments in configuration file)
+By default server uses file `server_config.csv` wich is in the server directory.  
+You can use other config files by passing path as command line argument `./mcache-server.out -c path_to_config_file`.   
+This is example configuration file (at the moment *config reader* does not support comments in configuration file).
 ```
 static_save	yes
 static_load	no
