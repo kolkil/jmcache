@@ -17,6 +17,7 @@ int log_enqueue(log_queue *queue, char *value)
 
     if (queue->element[index_to_enqueue] != NULL) // queue full
         return 1;
+
     queue->element[index_to_enqueue] = value;
     queue->last = index_to_enqueue;
     mtx_unlock(&queue->lock);
@@ -27,6 +28,7 @@ int log_enqueue(log_queue *queue, char *value)
 char *log_dequeue(log_queue *queue)
 {
     mtx_lock(&queue->lock);
+
     if (queue->element[queue->first] == NULL) // queue empty
         return NULL;
 
