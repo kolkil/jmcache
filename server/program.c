@@ -1,7 +1,7 @@
 #include "program.h"
+#include "threading.h"
 #include "communication/socket.h"
 #include "utils/debug_print.h"
-#include "storage/static_file.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -11,74 +11,12 @@
 #include <threads.h>
 #include <signal.h>
 
-typedef struct
-{
-    hash_table *hash;
-    int fd,
-        busy;
-} thread_data;
-
 static volatile int keep_running = 1;
 
 void intHandler(int dummy)
 {
     keep_running = dummy = 0;
     return;
-}
-
-int deal_with_client(hash_table *hash, int client_fd)
-{
-    int result = 1;
-    while (result)
-    {
-        result = read_data_send_response(hash, client_fd);
-    }
-    return result;
-}
-
-int dealer_thread(void *data)
-{
-    thread_data *t_data = (thread_data *)data;
-    deal_with_client(t_data->hash, t_data->fd);
-    close(t_data->fd);
-    t_data->busy = 2;
-    return 0;
-}
-
-int join_completed_dealer_threads(thrd_t *threads, thread_data *t_data)
-{
-    for (int k = 0; k < THREADS_NUM; ++k)
-    {
-        if (t_data[k].busy == 2)
-        {
-            thrd_join(threads[k], NULL);
-            t_data[k].busy = 0;
-        }
-    }
-    return 0;
-}
-
-int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_fd)
-{
-    for (int k = 0; k < THREADS_NUM; ++k)
-    {
-        join_completed_dealer_threads(threads, t_data);
-        if (t_data[k].busy)
-            continue;
-
-        t_data[k].fd = client_fd;
-
-        if (thrd_create(&threads[k], dealer_thread, &t_data[k]) != thrd_success)
-        {
-            debug_print("Could not create thread", 2);
-            close(t_data[k].fd);
-            return -1;
-        }
-        t_data[k].busy = 1;
-        return k;
-    }
-
-    return -1;
 }
 
 int conditional_stop()
@@ -110,13 +48,39 @@ int start_program(config_values *cnf)
         return params->fd;
 
     thrd_t t_ids[THREADS_NUM];
+    thrd_t error_logger_thread,
+        traffic_logger_thread;
     thread_data threads_data[THREADS_NUM];
+    logger_thread_data traffic_data,
+        error_data;
+
+    traffic_data.log = logger_new("traffic_log.log");
+    traffic_data.path = "traffic_log.log";
+    traffic_data.stop = 0;
+
+    error_data.log = logger_new("error_log.log");
+    error_data.path = "error_log.log";
+    error_data.stop = 0;
 
     for (int i = 0; i < THREADS_NUM; ++i) //set default values
     {
         threads_data[i].hash = hash;
         threads_data[i].fd = -1;
         threads_data[i].busy = 0;
+        threads_data[i].error_logger = error_data.log;
+        threads_data[i].traffic_logger = traffic_data.log;
+    }
+
+    if (thrd_create(&traffic_logger_thread, logger_thread, &traffic_data) != thrd_success)
+    {
+        debug_print_raw("could not create traffic_thread");
+        return 1;
+    }
+
+    if (thrd_create(&error_logger_thread, logger_thread, &error_data) != thrd_success)
+    {
+        debug_print_raw("could not create traffic_thread");
+        return 1;
     }
 
     debug_print("main loop", 1);
@@ -153,6 +117,12 @@ int start_program(config_values *cnf)
     }
 
     join_completed_dealer_threads(t_ids, threads_data);
+
+    error_data.stop = 1;
+    traffic_data.stop = 1;
+
+    thrd_join(traffic_logger_thread, NULL);
+    thrd_join(error_logger_thread, NULL);
 
     if (cnf->static_save)
     {
