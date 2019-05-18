@@ -11,6 +11,7 @@ logger *logger_new(char *path)
     new_logger->path = path;
     FILE *f = fopen(path, "a+");
     new_logger->fd = fileno(f);
+    new_logger->queue = log_queue_new();
 
     return new_logger;
 }

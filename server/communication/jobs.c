@@ -219,40 +219,60 @@ int execute_all(hash_table *hash, int client_fd)
     return 1;
 }
 
-int do_job(hash_table *hash, mcache_request request, int client_fd)
+int do_job(hash_table *hash, mcache_request request, int client_fd, connection_statistics *stats)
 {
+    long start_time = 0;
+
     switch (request.header.command)
     {
     case INSERT:
+        start_time = microtime_now();
         execute_insert(hash, request, client_fd);
+        ++stats->insert.count;
+        stats->insert.time += microtime_now() - start_time;
         break;
+
     case GET:
+        start_time = microtime_now();
         execute_get(hash, request, client_fd);
+        ++stats->get.count;
+        stats->get.time += microtime_now() - start_time;
         break;
+
     case POP:
+        start_time = microtime_now();
         execute_pop(hash, request, client_fd);
+        ++stats->pop.count;
+        stats->pop.time += microtime_now() - start_time;
         break;
+
     case KEYS:
+        start_time = microtime_now();
         execute_keys(hash, client_fd);
+        ++stats->keys.count;
+        stats->keys.time += microtime_now() - start_time;
         break;
+
     case ALL:
+        start_time = microtime_now();
         execute_all(hash, client_fd);
+        ++stats->all.count;
+        stats->all.time += microtime_now() - start_time;
         break;
+
     default:
         break;
     }
     return 0;
 }
 
-int read_data_send_response(hash_table *hash, int client_fd)
+int read_data_send_response(hash_table *hash, int client_fd, connection_statistics *stats)
 {
     mcache_request request = read_request(client_fd);
     if (request.code != 0)
-    {
         return 0;
-    }
 
-    int result = do_job(hash, request, client_fd);
+    int result = do_job(hash, request, client_fd, stats);
 
     return !result;
 }

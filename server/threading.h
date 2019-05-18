@@ -8,6 +8,8 @@ typedef struct
     hash_table *hash;
     int fd,
         busy;
+    logger *traffic_logger,
+        *error_logger;
 } thread_data;
 
 typedef struct
@@ -17,9 +19,7 @@ typedef struct
     logger *log;
 } logger_thread_data;
 
-int deal_with_client(hash_table *, int);
 int dealer_thread(void *);
 int join_completed_dealer_threads(thrd_t *, thread_data *);
 int create_thread_for_request(thrd_t *, thread_data *, int);
-int traffic_logger_thread(void *);
-int error_logger_thread(void *);
+int logger_thread(void *);

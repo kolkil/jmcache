@@ -48,14 +48,39 @@ int start_program(config_values *cnf)
         return params->fd;
 
     thrd_t t_ids[THREADS_NUM];
-    thrd_t logger_thread;
+    thrd_t error_logger_thread,
+        traffic_logger_thread;
     thread_data threads_data[THREADS_NUM];
+    logger_thread_data traffic_data,
+        error_data;
+
+    traffic_data.log = logger_new("traffic_log.log");
+    traffic_data.path = "traffic_log.log";
+    traffic_data.stop = 0;
+
+    error_data.log = logger_new("error_log.log");
+    error_data.path = "error_log.log";
+    error_data.stop = 0;
 
     for (int i = 0; i < THREADS_NUM; ++i) //set default values
     {
         threads_data[i].hash = hash;
         threads_data[i].fd = -1;
         threads_data[i].busy = 0;
+        threads_data[i].error_logger = error_data.log;
+        threads_data[i].traffic_logger = traffic_data.log;
+    }
+
+    if (thrd_create(&traffic_logger_thread, logger_thread, &traffic_data) != thrd_success)
+    {
+        debug_print_raw("could not create traffic_thread");
+        return 1;
+    }
+
+    if (thrd_create(&error_logger_thread, logger_thread, &error_data) != thrd_success)
+    {
+        debug_print_raw("could not create traffic_thread");
+        return 1;
     }
 
     debug_print("main loop", 1);
@@ -92,6 +117,12 @@ int start_program(config_values *cnf)
     }
 
     join_completed_dealer_threads(t_ids, threads_data);
+
+    error_data.stop = 1;
+    traffic_data.stop = 1;
+
+    thrd_join(traffic_logger_thread, NULL);
+    thrd_join(error_logger_thread, NULL);
 
     if (cnf->static_save)
     {

@@ -3,9 +3,13 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
 
-int traffic_logger_thread(void *data)
+int logger_thread(void *data)
 {
+    debug_print("logger_thread", 1);
     logger_thread_data *ltd = (logger_thread_data *)data;
     logger *log = logger_new(ltd->path);
 
@@ -14,19 +18,44 @@ int traffic_logger_thread(void *data)
 
     while (ltd->stop != 1)
     {
+        debug_print_int(ltd->stop);
+        char *data;
+
+        while ((data = log_dequeue(ltd->log->queue)) != NULL)
+        {
+            debug_print(data, 2);
+            logger_log(ltd->log, data);
+            free(data);
+        }
+        sleep(1);
     }
+
+    debug_print("logger_thread", 0);
 
     return 0;
 }
 
-int deal_with_client(hash_table *hash, int client_fd)
+int deal_with_client(thread_data *data)
 {
     int result = 1;
+    connection_statistics stats;
+    memset(&stats, 0, sizeof(connection_statistics));
+    char buffer[1024] = {0};
+    int income_time = time(NULL);
 
     while (result)
-    {
-        result = read_data_send_response(hash, client_fd);
-    }
+        result = read_data_send_response(data->hash, data->fd, &stats);
+
+    int end_time = time(NULL);
+
+    sprintf(buffer, "%d\t%d\t%d\t%f\t%d\t%f\t%d\t%f\t%d\t%f\t%d\t%f\n", income_time, end_time,
+            stats.insert.count, msd(stats.insert.time, stats.insert.count),
+            stats.get.count, msd(stats.get.time, stats.get.count),
+            stats.pop.count, msd(stats.pop.time, stats.pop.count),
+            stats.keys.count, msd(stats.keys.time, stats.keys.count),
+            stats.all.count, msd(stats.all.time, stats.all.count));
+
+    log_enqueue(data->traffic_logger->queue, buffer);
 
     return result;
 }
@@ -34,7 +63,7 @@ int deal_with_client(hash_table *hash, int client_fd)
 int dealer_thread(void *data)
 {
     thread_data *t_data = (thread_data *)data;
-    deal_with_client(t_data->hash, t_data->fd);
+    deal_with_client(t_data);
     close(t_data->fd);
     t_data->busy = 2;
 
