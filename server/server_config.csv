@@ -2,8 +2,11 @@ static_save	yes
 static_load	no
 static_file	./ssave.tdb
 
-server_address  127.0.0.1
+server_address	127.0.0.1
 server_port	2137
 
 traffic_log	yes
+traffic_log_file	traffic_log.log
+
 error_log	yes
+error_log_file	error_log.log
