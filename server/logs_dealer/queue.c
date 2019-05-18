@@ -47,6 +47,7 @@ char *log_dequeue(log_queue *queue)
     {
         mtx_unlock(&queue->lock);
         queue->empty = 1;
+        queue->first = 0;
         return NULL;
     }
 
