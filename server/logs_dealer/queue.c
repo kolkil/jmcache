@@ -24,7 +24,10 @@ int log_enqueue(log_queue *queue, char *value)
     int index_to_enqueue = queue->empty ? 0 : (queue->last + 1) % QUEUE_LEN;
 
     if (queue->element[index_to_enqueue] != NULL) // queue full
+    {
+        mtx_unlock(&queue->lock);
         return 1;
+    }
 
     queue->empty = 0;
     int value_len = strlen(value);
@@ -42,6 +45,7 @@ char *log_dequeue(log_queue *queue)
 
     if (queue->element[queue->first] == NULL) // queue empty
     {
+        mtx_unlock(&queue->lock);
         queue->empty = 1;
         return NULL;
     }
