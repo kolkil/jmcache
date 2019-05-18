@@ -71,15 +71,15 @@ int start_program(config_values *cnf)
         threads_data[i].traffic_logger = traffic_data.log;
     }
 
-    if (thrd_create(&traffic_logger_thread, logger_thread, &traffic_data) != thrd_success)
+    if (cnf->traffic_log && thrd_create(&traffic_logger_thread, logger_thread, &traffic_data) != thrd_success)
     {
         debug_print_raw("could not create traffic_thread");
         return 1;
     }
 
-    if (thrd_create(&error_logger_thread, logger_thread, &error_data) != thrd_success)
+    if (cnf->error_log && thrd_create(&error_logger_thread, logger_thread, &error_data) != thrd_success)
     {
-        debug_print_raw("could not create traffic_thread");
+        debug_print_raw("could not create error_thread");
         return 1;
     }
 

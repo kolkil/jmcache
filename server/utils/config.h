@@ -5,7 +5,9 @@ typedef struct
         traffic_log,
         error_log;
     char *save_path,
-        *server_address;
+        *server_address,
+        *traffic_file,
+        *error_file;
     int server_port;
 } config_values;
 
