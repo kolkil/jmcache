@@ -1,6 +1,5 @@
 #include "protocol.h"
 
-
 typedef struct
 {
     char *address;
@@ -34,6 +33,13 @@ typedef struct
     int count;
 } all_result;
 
+typedef struct
+{
+    query_result result;
+    int filled,
+        items_count;
+} stats_result;
+
 connection_params mcache_connect(char *, int);
 int mcache_dissconnect(connection_params *);
 
@@ -49,3 +55,5 @@ get_result mcache_pop_strings(connection_params *, char *);
 keys_result mcache_keys(connection_params *);
 
 all_result mcache_all(connection_params *);
+
+stats_result mcache_stats(connection_params *);

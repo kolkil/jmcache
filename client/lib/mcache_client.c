@@ -439,3 +439,44 @@ all_result mcache_all(connection_params *params)
     }
     return result;
 }
+
+stats_result mcache_stats(connection_params *params)
+{
+    mcache_request_header header;
+    header.command = STATS;
+    header.data_len = 0;
+    header.key_len = 0;
+
+    stats_result result;
+
+    if (send_request_header(params, header) != 0)
+    {
+        result.result.code = 2;
+        result.result.error_message = alloc_string("Error during sending header");
+        return result;
+    }
+
+    mcache_response_header response_header = read_response_header(params);
+
+    if (response_header.info != OK)
+    {
+        result.result.code = 5;
+        result.result.error_message = alloc_string("Server returned error");
+        return result;
+    }
+
+    if (response_header.response_type == NO_DATA)
+    {
+        result.result.code = 0;
+        return result;
+    }
+
+    uint32_t *tmp = (uint32_t *)read_data_and_length(params).data;
+    result.filled = (uint32_t)*tmp;
+    free(tmp);
+    *tmp = (uint32_t *)read_data_and_length(params).data;
+    result.items_count = (uint32_t)*tmp;
+    free(tmp);
+
+    return result;
+}
