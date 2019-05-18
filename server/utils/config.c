@@ -79,6 +79,8 @@ config_values *read_config(char *path)
 
         compare_and_set_string("server_address", key_buffer, value_buffer, &config->server_address);
         compare_and_set_string("static_file", key_buffer, value_buffer, &config->save_path);
+        compare_and_set_string("traffic_log_file", key_buffer, value_buffer, &config->traffic_file);
+        compare_and_set_string("error_log_file", key_buffer, value_buffer, &config->error_file);
 
         memset(key_buffer, 0, 1024);
         memset(value_buffer, 0, 1024);

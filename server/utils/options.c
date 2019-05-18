@@ -8,7 +8,10 @@
 
 void set_default_options(input_options *opt)
 {
-    opt->config_path = calloc(strlen("./server_config.csv"), sizeof(char));
+    char buffer[] = "./server_config.csv";
+    opt->config_path = calloc(strlen(buffer), sizeof(char));
+    memcpy(opt->config_path, buffer, strlen(buffer));
+    
     return;
 }
 
