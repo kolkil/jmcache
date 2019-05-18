@@ -59,6 +59,8 @@ int main(void)
         memset(buffer, 0, 1024);
     }
 
+    printf("default\trandom\tJenkins\n");
+
     for (int i = 0; i < PRIME_LENGTH; ++i)
         printf("%d\t%d\t%d\n", hash_0_arr[i], hash_1_arr[i], hash_2_arr[i]);
 
