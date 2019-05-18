@@ -54,12 +54,12 @@ int start_program(config_values *cnf)
     logger_thread_data traffic_data,
         error_data;
 
-    traffic_data.log = logger_new("traffic_log.log");
-    traffic_data.path = "traffic_log.log";
+    traffic_data.log = logger_new(cnf->traffic_file);
+    traffic_data.path = cnf->traffic_file;
     traffic_data.stop = 0;
 
-    error_data.log = logger_new("error_log.log");
-    error_data.path = "error_log.log";
+    error_data.log = logger_new(cnf->error_file);
+    error_data.path = cnf->traffic_file;
     error_data.stop = 0;
 
     for (int i = 0; i < THREADS_NUM; ++i) //set default values
