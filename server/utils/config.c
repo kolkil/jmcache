@@ -5,110 +5,86 @@
 #include <stdlib.h>
 #include <string.h>
 
-void clean_buffer(char *buffer, int len)
+int compare_yes_and_set_int(char *target, char *key, char *value, int *to_set)
 {
-    for (int i = 0; i < len; ++i)
-        buffer[i] = 0;
+    if (strcmp(target, key))
+        return 1;
+
+    debug_print(target, 1);
+    debug_print(value, 2);
+
+    if (strcmp("yes", value))
+    {
+        *to_set = 0;
+        debug_print(target, 0);
+        return 1;
+    }
+
+    *to_set = 1;
+    debug_print(target, 0);
+
+    return 0;
+}
+
+int compare_and_set_int(char *target, char *key, char *value, int *to_set)
+{
+    if (strcmp(target, key))
+        return 1;
+
+    debug_print(target, 1);
+    debug_print(value, 2);
+
+    *to_set = atoi(value);
+    debug_print(target, 0);
+
+    return 0;
+}
+
+int compare_and_set_string(char *target, char *key, char *value, char **to_set)
+{
+    if (strcmp(target, key))
+        return 1;
+
+    debug_print(target, 1);
+    debug_print(value, 2);
+
+    int len = strlen(value);
+    *to_set = calloc(len + 1, sizeof(char));
+    memcpy(*to_set, value, len);
+    debug_print(target, 0);
+
+    return 0;
 }
 
 config_values *read_config(char *path)
 {
     FILE *f = fopen(path, "r");
-    char buffer[1024] = {0};
-    int port = 0;
+    char key_buffer[1024] = {0},
+         value_buffer[1024] = {0};
+
     if (f == NULL)
         return NULL;
-    config_values *config = malloc(sizeof(config_values));
 
+    config_values *config = calloc(1, sizeof(config_values));
     debug_print("file reading loop", 1);
 
-    for (int i = 0; fscanf(f, "%s", buffer); ++i)
+    for (int i = 0; fscanf(f, "%s", key_buffer) == 1 && fscanf(f, "%s", value_buffer) == 1; ++i)
     {
-        if (!strcmp(buffer, "static_save"))
-        {
-            debug_print("static_save", 1);
+        compare_yes_and_set_int("static_save", key_buffer, value_buffer, &config->static_save);
+        compare_yes_and_set_int("static_load", key_buffer, value_buffer, &config->static_load);
+        compare_yes_and_set_int("traffic_log", key_buffer, value_buffer, &config->traffic_log);
+        compare_yes_and_set_int("error_log", key_buffer, value_buffer, &config->error_log);
 
-            if (fscanf(f, "%s", buffer) != 1)
-                return NULL;
-            if (!strcmp(buffer, "yes"))
-                config->static_save = 1;
-            else
-                config->static_save = 0;
+        compare_and_set_int("server_port", key_buffer, value_buffer, &(config->server_port));
 
-            debug_print(buffer, 2);
-            debug_print("static_save", 0);
+        compare_and_set_string("server_address", key_buffer, value_buffer, &config->server_address);
+        compare_and_set_string("static_file", key_buffer, value_buffer, &config->save_path);
 
-            clean_buffer(buffer, 1024);
-        }
-        else if (!strcmp(buffer, "static_load"))
-        {
-            debug_print("static_load", 1);
-
-            if (fscanf(f, "%s", buffer) != 1)
-                return NULL;
-            if (!strcmp(buffer, "yes"))
-                config->static_load = 1;
-            else
-                config->static_load = 0;
-
-            debug_print(buffer, 2);
-            debug_print("static_load", 0);
-
-            clean_buffer(buffer, 1024);
-        }
-        else if (!strcmp(buffer, "static_file"))
-        {
-            debug_print("static_file", 1);
-            debug_print("reading file", 1);
-
-            clean_buffer(buffer, 1024);
-
-            if (!fscanf(f, "%s", buffer))
-                return NULL;
-
-            debug_print("reading file", 0);
-
-            config->save_path = malloc(strlen(buffer) + 1);
-            strcpy(config->save_path, buffer);
-            clean_buffer(buffer, 1024);
-
-            debug_print(config->save_path, 2);
-            debug_print("static_file", 0);
-        }
-        else if (!strcmp(buffer, "server_address"))
-        {
-            debug_print("server_address", 1);
-
-            if (fscanf(f, "%s", buffer) != 1)
-                return NULL;
-
-            debug_print(buffer, 2);
-
-            config->server_address = malloc(strlen(buffer) + 1);
-            strcpy(config->server_address, buffer);
-            clean_buffer(buffer, 1024);
-
-            debug_print("server_address", 0);
-        }
-        else if (!strcmp(buffer, "server_port"))
-        {
-            debug_print("server_port", 1);
-
-            if (fscanf(f, "%d", &port) != 1)
-                return NULL;
-            config->server_port = port;
-            clean_buffer(buffer, 1024);
-            debug_print_int(port);
-            debug_print("server_port", 0);
-        }
-        else
-        {
-            debug_print("no key", 1);
-            debug_print(buffer, 2);
-            debug_print("no key", 0);
-            break;
-        }
+        memset(key_buffer, 0, 1024);
+        memset(value_buffer, 0, 1024);
     }
+
     debug_print("file reading loop", 0);
+
     return config;
 }

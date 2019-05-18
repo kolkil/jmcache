@@ -83,3 +83,8 @@ float micro_to_seconds(long int a, long int b)
 {
     return (float)(a - b) / (1000 * 1000);
 }
+
+float msd(long int a, long int b)
+{
+    return b == 0 ? 0.0 : (float)(a / b) / (1000 * 1000);
+}

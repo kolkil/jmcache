@@ -8,7 +8,7 @@
 
 void set_default_options(input_options *opt)
 {
-    opt->config_path = "./server_config.csv";
+    opt->config_path = calloc(strlen("./server_config.csv"), sizeof(char));
     return;
 }
 
@@ -22,11 +22,14 @@ int parse_input(input_options *opt, int argc, char **argv)
         {
         case 'c':
             tmp = strlen(optarg);
+
             if (tmp == 0)
                 return -1;
+
             free(opt->config_path);
             opt->config_path = malloc(tmp + 1);
             strcpy(opt->config_path, optarg);
+
             break;
 
         default:
@@ -34,5 +37,6 @@ int parse_input(input_options *opt, int argc, char **argv)
             break;
         }
     }
+
     return 0;
 }
