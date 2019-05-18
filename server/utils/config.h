@@ -1,12 +1,12 @@
 typedef struct
 {
-    short static_save,
+    int static_save,
         static_load,
         traffic_log,
-        error_log;
+        error_log,
+        server_port;
     char *save_path,
         *server_address;
-    int server_port;
 } config_values;
 
 config_values *read_config(char *);
