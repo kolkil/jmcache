@@ -32,6 +32,7 @@ int select_command()
     printf("[3] pop\n");
     printf("[4] keys\n");
     printf("[5] all\n");
+    printf("[6] stats\n");
     printf(": ");
     int choi = -1;
     if (scanf("%d", &choi) != 1)
@@ -68,6 +69,8 @@ int main(int argc, char **argv)
         get_result gr;
         keys_result kr;
         all_result ar;
+        stats_result sr;
+
         switch (command)
         {
         case INSERT:
@@ -119,6 +122,11 @@ int main(int argc, char **argv)
                 free(ar.all_data[i]);
             }
             free(ar.all_data);
+            break;
+
+        case STATS:
+            sr = mcache_stats(&params);
+            printf("filled\t%d\ncount\t%d\n", sr.filled, sr.items_count);
             break;
 
         default:

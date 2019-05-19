@@ -28,10 +28,17 @@ int sstrings_compare(simple_string a, simple_string b)
 
 uint16_t get_hash(uint8_t *key, uint32_t len)
 {
-    uint16_t hash = 0;
-
-    for (uint32_t i = 0; i < len; ++i)
-        hash += key[i] * 10ul + i + 1;
+    size_t i = 0;
+    uint32_t hash = 0;
+    while (i != len)
+    {
+        hash += key[i++];
+        hash += hash << 10;
+        hash ^= hash >> 6;
+    }
+    hash += hash << 3;
+    hash ^= hash >> 11;
+    hash += hash << 15;
 
     return hash % PRIME_LENGTH;
 }
@@ -253,7 +260,7 @@ simple_string *hash_table_get_keys(hash_table *t)
 simple_string **hash_table_get_all_data(hash_table *t)
 {
     simple_string **all_data = calloc(t->count, sizeof(simple_string *));
-    
+
     for (uint32_t i = 0; i < t->count; ++i)
         all_data[i] = calloc(2, sizeof(simple_string));
 

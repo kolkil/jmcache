@@ -19,14 +19,15 @@ socket_params *prepare_socket(char *address, int port)
 
     if ((params->fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == 0)
     {
-        printf("socket failed");
+        debug_print_raw("socket failed");
         return params;
     }
 
     if (setsockopt(params->fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(int)))
     {
-        printf("setsockopt");
-        return params;
+        debug_print_raw("setsockopt");
+        free(params);
+        return NULL;
     }
 
     params->address.sin_family = AF_INET;
@@ -35,10 +36,13 @@ socket_params *prepare_socket(char *address, int port)
 
     if (bind(params->fd, (struct sockaddr *)&(params->address), sizeof(params->address)) < 0)
     {
-        printf("bind failed");
-        return params;
+        debug_print_raw("bind failed");
+        free(params);
+        return NULL;
     }
+
     debug_print("prepare_socket", 0);
+
     return params;
 }
 

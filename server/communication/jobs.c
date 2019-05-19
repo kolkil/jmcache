@@ -219,6 +219,28 @@ int execute_all(hash_table *hash, int client_fd)
     return 1;
 }
 
+int execute_stats(hash_table *hash, int client_fd)
+{
+    mcache_response_header header;
+    header.info = OK;
+    header.response_type = VALUE;
+    header.items_count = 2;
+
+    mtx_lock(&hash->general_lock);
+    uint32_t filled = hash->filled,
+             count = hash->count;
+    uint32_t len = 4;
+    mtx_unlock(&hash->general_lock);
+
+    send_response_header(client_fd, header);
+    send_data(client_fd, (uint8_t *)&len, len);
+    send_data(client_fd, (uint8_t *)&filled, len);
+    send_data(client_fd, (uint8_t *)&len, len);
+    send_data(client_fd, (uint8_t *)&count, len);
+
+    return 1;
+}
+
 int do_job(hash_table *hash, mcache_request request, int client_fd, connection_statistics *stats)
 {
     long start_time = 0;
@@ -258,6 +280,10 @@ int do_job(hash_table *hash, mcache_request request, int client_fd, connection_s
         execute_all(hash, client_fd);
         ++stats->all.count;
         stats->all.time += microtime_now() - start_time;
+        break;
+
+    case STATS:
+        execute_stats(hash, client_fd);
         break;
 
     default:
