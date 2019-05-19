@@ -6,7 +6,9 @@ typedef struct
         error_log,
         server_port;
     char *save_path,
-        *server_address;
+        *server_address,
+        *traffic_file,
+        *error_file;
 } config_values;
 
 config_values *read_config(char *);
