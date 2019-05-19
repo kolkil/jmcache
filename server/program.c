@@ -44,6 +44,9 @@ int start_program(config_values *cnf)
 
     socket_params *params = prepare_socket(cnf->server_address, cnf->server_port);
 
+    if (params == NULL)
+        return -1;
+
     if (params->fd <= 0)
         return params->fd;
 

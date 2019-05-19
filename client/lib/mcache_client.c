@@ -474,7 +474,7 @@ stats_result mcache_stats(connection_params *params)
     uint32_t *tmp = (uint32_t *)read_data_and_length(params).data;
     result.filled = (uint32_t)*tmp;
     free(tmp);
-    *tmp = (uint32_t *)read_data_and_length(params).data;
+    tmp = (uint32_t *)read_data_and_length(params).data;
     result.items_count = (uint32_t)*tmp;
     free(tmp);
 
