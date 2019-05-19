@@ -58,6 +58,9 @@ int start_program(config_values *cnf)
     traffic_data.path = cnf->traffic_file;
     traffic_data.stop = 0;
 
+    if (!traffic_data.log->file_existed)
+        write_traffic_log_format(traffic_data.log);
+
     error_data.log = logger_new(cnf->error_file);
     error_data.path = cnf->traffic_file;
     error_data.stop = 0;

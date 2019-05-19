@@ -11,9 +11,8 @@ int logger_thread(void *data)
 {
     debug_print("logger_thread", 1);
     logger_thread_data *ltd = (logger_thread_data *)data;
-    logger *log = logger_new(ltd->path);
 
-    if (log->fd <= 0)
+    if (ltd->log->fd <= 0)
         return 1;
 
     while (ltd->stop != 1)
