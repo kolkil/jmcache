@@ -17,11 +17,21 @@ static_save	yes
 static_load	no
 static_file	./ssave.tdb
 
-server_address  127.0.0.1
-server_port 2137
+server_address	127.0.0.1
+server_port	2137
+
+traffic_log	yes
+traffic_log_file	traffic_log.log
+
+error_log	yes
+error_log_file error_log.log
 ```
-* `static_save` - save add data to `static_file` before exit
+* `static_save` - save data to `static_file` before exit
 * `static_load` - load data from `static_file` before open for connections
 * `static_file` - path to file
 * `server_address` - address to wich server binds
 * `server_port` - port for communication (default 2137)
+* `traffic_log` - save statistical data
+* `traffic_log_file` - path to file
+* `error_log` - save error logs
+* `error_log_file` - path to file
