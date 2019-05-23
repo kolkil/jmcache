@@ -90,3 +90,12 @@ config_values *read_config(char *path)
 
     return config;
 }
+
+void free_config_values(config_values *values)
+{
+    free(values->error_file);
+    free(values->save_path);
+    free(values->traffic_file);
+    free(values->server_address);
+    free(values);
+}

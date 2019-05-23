@@ -5,6 +5,18 @@
 #include <unistd.h>
 #include <string.h>
 
+char *copy_string(char *str)
+{
+    int len = strlen(str);
+    if (len <= 0)
+        return NULL;
+
+    char *new = calloc(sizeof(char), len + 1);
+    memcpy(new, str, len);
+
+    return new;
+}
+
 int file_exists(char *path)
 {
     if (access(path, F_OK) != -1) //file exists
@@ -16,7 +28,7 @@ int file_exists(char *path)
 logger *logger_new(char *path)
 {
     logger *new_logger = calloc(1, sizeof(logger));
-    new_logger->path = path;
+    new_logger->path = copy_string(path);
 
     FILE *f;
     new_logger->file_existed = file_exists(new_logger->path);
@@ -25,6 +37,13 @@ logger *logger_new(char *path)
     new_logger->queue = log_queue_new();
 
     return new_logger;
+}
+
+void free_logger(logger *log)
+{
+    free(log->path);
+    free_log_queue(log->queue);
+    free(log);
 }
 
 int logger_log(logger *log, char *value)

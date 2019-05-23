@@ -9,10 +9,16 @@
 void set_default_options(input_options *opt)
 {
     char buffer[] = "./server_config.csv";
-    opt->config_path = calloc(strlen(buffer), sizeof(char));
+    opt->config_path = calloc(sizeof(char), strlen(buffer) + 1);
     memcpy(opt->config_path, buffer, strlen(buffer));
-    
+
     return;
+}
+
+void clear_default_options(input_options *opt)
+{
+    if (opt->config_path != NULL)
+        free(opt->config_path);
 }
 
 int parse_input(input_options *opt, int argc, char **argv)
@@ -30,7 +36,7 @@ int parse_input(input_options *opt, int argc, char **argv)
                 return -1;
 
             free(opt->config_path);
-            opt->config_path = malloc(tmp + 1);
+            opt->config_path = calloc(sizeof(char), tmp + 1);
             strcpy(opt->config_path, optarg);
 
             break;

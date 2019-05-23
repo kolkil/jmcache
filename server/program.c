@@ -58,14 +58,12 @@ int start_program(config_values *cnf)
         error_data;
 
     traffic_data.log = logger_new(cnf->traffic_file);
-    traffic_data.path = cnf->traffic_file;
     traffic_data.stop = 0;
 
     if (!traffic_data.log->file_existed)
         write_traffic_log_format(traffic_data.log);
 
     error_data.log = logger_new(cnf->error_file);
-    error_data.path = cnf->traffic_file;
     error_data.stop = 0;
 
     for (int i = 0; i < THREADS_NUM; ++i) //set default values
@@ -106,7 +104,7 @@ int start_program(config_values *cnf)
 
         if (client_fd <= 0)
         {
-            debug_print("Could not establish connection", 2);
+            debug_print("Could not estabilish connection", 2);
             continue;
         }
 
@@ -130,6 +128,8 @@ int start_program(config_values *cnf)
     thrd_join(traffic_logger_thread, NULL);
     thrd_join(error_logger_thread, NULL);
 
+    free_socket_params(params);
+
     if (cnf->static_save)
     {
         FILE *f = fopen(cnf->save_path, "w+b");
@@ -139,6 +139,8 @@ int start_program(config_values *cnf)
 
     debug_print("main loop", 0);
     free_hash_table(hash);
+    free_logger(error_data.log);
+    free_logger(traffic_data.log);
 
     return 0;
 }
