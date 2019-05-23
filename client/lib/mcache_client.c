@@ -71,13 +71,7 @@ void close_and_reset(connection_params *params)
 
 int send_request_header(connection_params *params, mcache_request_header header)
 {
-    uint8_t header_data[9] = {0};
-    header_data[0] = header.command;
-    uint32_t *rest_of_header = (uint32_t *)(header_data + 1);
-    rest_of_header[0] = header.key_len;
-    rest_of_header[1] = header.data_len;
-
-    if (send(params->server_fd, header_data, 9, MSG_NOSIGNAL) != 9)
+    if (send(params->server_fd, &header, sizeof(header), MSG_NOSIGNAL) != sizeof(header))
     {
         close_and_reset(params);
         return -1;
@@ -99,22 +93,13 @@ int send_data(connection_params *params, data_and_length data)
 mcache_response_header read_response_header(connection_params *params)
 {
     mcache_response_header response;
-    response.info = OK;
-    response.response_type = NO_DATA;
-    response.items_count = 0;
 
-    uint8_t header[6] = {0};
-    if (recv(params->server_fd, header, 6, MSG_NOSIGNAL) != 6)
+    if (recv(params->server_fd, &response, sizeof(response), MSG_NOSIGNAL) != sizeof(response))
     {
         close_and_reset(params);
         response.info = UNKNOWN_ERROR;
         return response;
     }
-
-    response.info = header[0];
-    response.response_type = header[1];
-    response.items_count = *(uint32_t *)&header[2];
-
     return response;
 }
 
