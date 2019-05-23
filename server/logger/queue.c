@@ -45,9 +45,9 @@ char *log_dequeue(log_queue *queue)
 
     if (queue->element[queue->first] == NULL) // queue empty
     {
-        mtx_unlock(&queue->lock);
         queue->empty = 1;
         queue->first = 0;
+        mtx_unlock(&queue->lock);
         return NULL;
     }
 
