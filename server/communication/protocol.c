@@ -78,9 +78,9 @@ mcache_request read_request(int client_fd)
     if (request.header.key_len == 0)
         return request;
 
-    uint8_t *recived_data = read_from_client(client_fd, request.header.key_len);
+    uint8_t *received_data = read_from_client(client_fd, request.header.key_len);
 
-    request.key = recived_data;
+    request.key = received_data;
 
     if (request.key == NULL)
     {

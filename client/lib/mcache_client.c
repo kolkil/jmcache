@@ -157,8 +157,8 @@ get_result read_get_result(connection_params *params)
         return result;
     }
 
-    uint8_t *readed_data = calloc(sizeof(uint8_t), data_len);
-    if (recv(params->server_fd, readed_data, data_len, MSG_NOSIGNAL) != data_len)
+    uint8_t *read_data = calloc(sizeof(uint8_t), data_len);
+    if (recv(params->server_fd, read_data, data_len, MSG_NOSIGNAL) != data_len)
     {
         close_and_reset(params);
         result.result.code = 2;
@@ -166,7 +166,7 @@ get_result read_get_result(connection_params *params)
         return result;
     }
 
-    result.data.data = readed_data;
+    result.data.data = read_data;
     result.data.length = data_len;
     return result;
 }
