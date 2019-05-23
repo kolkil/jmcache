@@ -12,3 +12,4 @@ typedef struct
 } config_values;
 
 config_values *read_config(char *);
+void free_config_values(config_values *);

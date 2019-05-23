@@ -18,6 +18,15 @@ log_queue *log_queue_new()
     return new;
 }
 
+void free_log_queue(log_queue *log)
+{
+    for (int i = 0; i < QUEUE_LEN; ++i)
+        if (log->element[i] != NULL)
+            free(log->element[i]);
+
+    free(log);
+}
+
 int log_enqueue(log_queue *queue, char *value)
 {
     mtx_lock(&queue->lock);

@@ -9,5 +9,6 @@ typedef struct
 } logger;
 
 logger *logger_new(char *);
+void free_logger(logger *);
 int logger_log(logger *, char *);
-int write_traffic_log_format(logger*);
+int write_traffic_log_format(logger *);

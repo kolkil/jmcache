@@ -58,3 +58,11 @@ int socket_listen_and_accept(socket_params *params)
     }
     return new_socket;
 }
+
+void free_socket_params(socket_params *params)
+{
+    if (params == NULL)
+        return;
+
+    free(params);
+}
