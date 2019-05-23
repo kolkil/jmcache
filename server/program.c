@@ -106,7 +106,7 @@ int start_program(config_values *cnf)
 
         if (client_fd <= 0)
         {
-            debug_print("Could not estabilish connection", 2);
+            debug_print("Could not establish connection", 2);
             continue;
         }
 
