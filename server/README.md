@@ -1,4 +1,4 @@
-## JMCache - server
+## Pocket - server
 
 ### Description
 Server uses tcp protocol to deal with requests. All data is stored in hash table in the memory.
