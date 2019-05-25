@@ -23,16 +23,10 @@ int send_data(int client_fd, uint8_t *data, uint32_t len)
 mcache_request_header read_request_header(int client_fd)
 {
     mcache_request_header header;
-    uint8_t buffer[9] = {0};
-    int tmp = 0;
-    if ((tmp = recv(client_fd, buffer, 9, MSG_NOSIGNAL)) != 9)
-    {
+    
+    if (recv(client_fd, &header, sizeof(header), MSG_NOSIGNAL) != sizeof(header))
         header.command = UNKNOWN;
-        return header;
-    }
-    header.command = buffer[0];
-    header.key_len = *(uint32_t *)&buffer[1];
-    header.data_len = *(uint32_t *)&buffer[5];
+
     return header;
 }
 
@@ -51,16 +45,7 @@ uint8_t *read_from_client(int clien_fd, uint32_t len)
 
 int send_response_header(int client_fd, mcache_response_header header)
 {
-    uint8_t header_data[6] = {0};
-    header_data[0] = header.info;
-    header_data[1] = header.response_type;
-    uint32_t *rest_of_header = (uint32_t *)(header_data + 2);
-    rest_of_header[0] = header.items_count;
-
-    if (!send_data(client_fd, header_data, 6))
-        return 1;
-
-    return 0;
+    return send(client_fd, &header, sizeof(header), 0) != sizeof(header);
 }
 
 mcache_request read_request(int client_fd)
