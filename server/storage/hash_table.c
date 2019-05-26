@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 void free_if_not_null(void *ptr)
 {
@@ -348,4 +349,59 @@ void free_hash_table(hash_table *table)
     free_if_not_null(table);
 
     return;
+}
+
+int hash_table_save_to_file(hash_table *t, int fd)
+{
+    if (fd <= 0)
+        return 0;
+
+    simple_string **all_data = hash_table_get_all_data(t);
+
+    for (uint32_t i = 0, k; i < t->count; ++i)
+    {
+        k = write(fd, &all_data[i][0].len, sizeof(uint32_t));
+        k = write(fd, all_data[i][0].content, all_data[i][0].len);
+        k = write(fd, &all_data[i][1].len, sizeof(uint32_t));
+        k = write(fd, all_data[i][1].content, all_data[i][1].len);
+        k = k;
+        free(all_data[i]);
+    }
+
+    free(all_data);
+
+    return 1;
+}
+
+int hash_table_load_from_file(hash_table *t, int fd)
+{
+    if (fd <= 0)
+        return 0;
+
+    for (int32_t i = 0;; ++i)
+    {
+        simple_string key;
+
+        if (read(fd, &key.len, sizeof(uint32_t)) != sizeof(uint32_t))
+            return 0;
+
+        key.content = malloc(key.len * sizeof(uint8_t));
+
+        if (read(fd, key.content, key.len) != key.len)
+            return 0;
+
+        simple_string value;
+
+        if (read(fd, &value.len, sizeof(uint32_t)) != sizeof(uint32_t))
+            return 0;
+
+        value.content = malloc(value.len * sizeof(uint8_t));
+
+        if (read(fd, value.content, value.len) != value.len)
+            return 0;
+
+        hash_table_insert(t, key, value);
+    }
+
+    return 0;
 }

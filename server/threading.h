@@ -1,4 +1,4 @@
-#include "storage/static_file.h"
+#include "communication/jobs.h"
 #include "logger/logger.h"
 
 #define THREADS_NUM 64

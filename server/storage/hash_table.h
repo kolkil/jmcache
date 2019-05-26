@@ -33,3 +33,5 @@ int hash_table_delete(hash_table *, simple_string );
 simple_string *hash_table_get_keys(hash_table *);
 simple_string **hash_table_get_all_data(hash_table*);
 void hash_table_print(hash_table *);
+int hash_table_load_from_file(hash_table *, int);
+int hash_table_save_to_file(hash_table *, int);
