@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../lib/mcache_client.h"
+#include "../lib/mpocket_client.h"
 
 #define MAX_KEY_SIZE 128
 #define MAX_VALUE_SIZE 128
@@ -18,7 +18,7 @@ int menu_and_initialization(connection_params *params)
     printf("server port: ");
     if (scanf("%d", &port) != 1)
         return 0;
-    connection_params t = mcache_connect(address, port);
+    connection_params t = mpocket_connect(address, port);
     params->address = t.address;
     params->port = t.port;
     params->server_fd = t.server_fd;
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 
     if (argc == 3)
     {
-        params = mcache_connect(argv[1], atoi(argv[2]));
+        params = mpocket_connect(argv[1], atoi(argv[2]));
     }
     else if (menu_and_initialization(&params) != 1)
     {
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
             printf("put value: ");
             if (scanf("%s", value) != 1)
                 return 1;
-            qr = mcache_insert_strings(&params, key, value);
+            qr = mpocket_insert_strings(&params, key, value);
             printf("code %d\nmessage %s\n", qr.code, qr.error_message);
             break;
 
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
             printf("put key: ");
             if (scanf("%s", key) != 1)
                 return 1;
-            gr = mcache_get_strings(&params, key);
+            gr = mpocket_get_strings(&params, key);
             printf("\"%.*s\"\n", gr.data.length, gr.data.data);
             printf("code %d\nmessage %s\n", gr.result.code, gr.result.error_message);
             break;
@@ -97,13 +97,13 @@ int main(int argc, char **argv)
             printf("put key: ");
             if (scanf("%s", key) != 1)
                 return 1;
-            gr = mcache_pop_strings(&params, key);
+            gr = mpocket_pop_strings(&params, key);
             printf("\"%.*s\"\n", gr.data.length, gr.data.data);
             printf("code %d\nmessage %s\n", gr.result.code, gr.result.error_message);
             break;
 
         case KEYS:
-            kr = mcache_keys(&params);
+            kr = mpocket_keys(&params);
             for (int i = 0; i < kr.count; ++i)
             {
                 if (kr.keys[i].length == 0 || kr.keys[i].data == NULL)
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
             break;
 
         case ALL:
-            ar = mcache_all(&params);
+            ar = mpocket_all(&params);
             for (int i = 0; i < ar.count; ++i)
             {
                 printf("%.*s\t%.*s\n", ar.all_data[i][0].length, ar.all_data[i][0].data, ar.all_data[i][1].length, ar.all_data[i][1].data);
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
             break;
 
         case STATS:
-            sr = mcache_stats(&params);
+            sr = mpocket_stats(&params);
             printf("filled\t%d\ncount\t%d\n", sr.filled, sr.items_count);
             break;
 
