@@ -1,7 +1,6 @@
 #include "logger.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -35,12 +34,14 @@ logger *logger_new(char *path)
     f = fopen(path, "a+");
     new_logger->fd = fileno(f);
     new_logger->queue = log_queue_new();
+    new_logger->file = f;
 
     return new_logger;
 }
 
 void free_logger(logger *log)
 {
+    fclose(log->file);
     free(log->path);
     free_log_queue(log->queue);
     free(log);

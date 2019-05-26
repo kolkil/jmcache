@@ -99,7 +99,9 @@ int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_f
             close(t_data[k].fd);
             return -1;
         }
+
         t_data[k].busy = 1;
+
         return k;
     }
 

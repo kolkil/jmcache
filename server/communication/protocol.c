@@ -23,7 +23,7 @@ int send_data(int client_fd, uint8_t *data, uint32_t len)
 mpocket_request_header read_request_header(int client_fd)
 {
     mpocket_request_header header;
-    
+
     if (recv(client_fd, &header, sizeof(header), MSG_NOSIGNAL) != sizeof(header))
         header.command = UNKNOWN;
 
@@ -39,7 +39,7 @@ uint8_t *read_from_client(int clien_fd, uint32_t len)
         free(tmp);
         return NULL;
     }
-    
+
     return tmp;
 }
 
@@ -93,5 +93,6 @@ mpocket_request read_request(int client_fd)
         request.code = 1;
         return request;
     }
+
     return request;
 }

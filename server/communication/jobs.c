@@ -25,12 +25,12 @@ int execute_insert(hash_table *hash, mpocket_request request, int client_fd)
     {
         header.info = ERROR;
         send_response_header(client_fd, header);
-        return 1;
+        return 0;
     }
 
     send_response_header(client_fd, header);
 
-    return 0;
+    return 1;
 }
 
 int execute_get(hash_table *hash, mpocket_request request, int client_fd)
@@ -54,13 +54,14 @@ int execute_get(hash_table *hash, mpocket_request request, int client_fd)
         send_response_header(client_fd, header);
         mtx_unlock(&hash->general_lock);
 
-        return 1;
+        return 0;
     }
 
     send_response_header(client_fd, header);
     send_data(client_fd, (uint8_t *)&value.len, sizeof(value.len));
     int ret = send_data(client_fd, value.content, value.len);
     mtx_unlock(&hash->general_lock);
+    free(request.key);
 
     return ret;
 }
@@ -86,7 +87,7 @@ int execute_pop(hash_table *hash, mpocket_request request, int client_fd)
         send_response_header(client_fd, header);
         mtx_unlock(&hash->general_lock);
 
-        return 1;
+        return 0;
     }
 
     send_response_header(client_fd, header);
@@ -94,6 +95,7 @@ int execute_pop(hash_table *hash, mpocket_request request, int client_fd)
     int ret = send_data(client_fd, value.content, value.len);
     hash_table_delete(hash, key);
     mtx_unlock(&hash->general_lock);
+    free(request.key);
 
     return ret;
 }
@@ -244,52 +246,53 @@ int execute_stats(hash_table *hash, int client_fd)
 int do_job(hash_table *hash, mpocket_request request, int client_fd, connection_statistics *stats)
 {
     long start_time = 0;
+    int result = 0;
 
     switch (request.header.command)
     {
     case INSERT:
         start_time = microtime_now();
-        execute_insert(hash, request, client_fd);
+        result = execute_insert(hash, request, client_fd);
         ++stats->insert.count;
         stats->insert.time += microtime_now() - start_time;
         break;
 
     case GET:
         start_time = microtime_now();
-        execute_get(hash, request, client_fd);
+        result = execute_get(hash, request, client_fd);
         ++stats->get.count;
         stats->get.time += microtime_now() - start_time;
         break;
 
     case POP:
         start_time = microtime_now();
-        execute_pop(hash, request, client_fd);
+        result = execute_pop(hash, request, client_fd);
         ++stats->pop.count;
         stats->pop.time += microtime_now() - start_time;
         break;
 
     case KEYS:
         start_time = microtime_now();
-        execute_keys(hash, client_fd);
+        result = execute_keys(hash, client_fd);
         ++stats->keys.count;
         stats->keys.time += microtime_now() - start_time;
         break;
 
     case ALL:
         start_time = microtime_now();
-        execute_all(hash, client_fd);
+        result = execute_all(hash, client_fd);
         ++stats->all.count;
         stats->all.time += microtime_now() - start_time;
         break;
 
     case STATS:
-        execute_stats(hash, client_fd);
+        result = execute_stats(hash, client_fd);
         break;
 
     default:
         break;
     }
-    return 0;
+    return result;
 }
 
 int read_data_send_response(hash_table *hash, int client_fd, connection_statistics *stats)
@@ -298,7 +301,14 @@ int read_data_send_response(hash_table *hash, int client_fd, connection_statisti
     if (request.code != 0)
         return 0;
 
-    int result = do_job(hash, request, client_fd, stats);
+    if (!do_job(hash, request, client_fd, stats))
+    {
+        if (request.key != NULL)
+            free(request.key);
 
-    return !result;
+        if (request.data != NULL)
+            free(request.data);
+    }
+
+    return 1;
 }
