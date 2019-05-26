@@ -20,9 +20,9 @@ int send_data(int client_fd, uint8_t *data, uint32_t len)
     return 0;
 }
 
-mcache_request_header read_request_header(int client_fd)
+mpocket_request_header read_request_header(int client_fd)
 {
-    mcache_request_header header;
+    mpocket_request_header header;
     
     if (recv(client_fd, &header, sizeof(header), MSG_NOSIGNAL) != sizeof(header))
         header.command = UNKNOWN;
@@ -43,14 +43,14 @@ uint8_t *read_from_client(int clien_fd, uint32_t len)
     return tmp;
 }
 
-int send_response_header(int client_fd, mcache_response_header header)
+int send_response_header(int client_fd, mpocket_response_header header)
 {
     return send(client_fd, &header, sizeof(header), 0) != sizeof(header);
 }
 
-mcache_request read_request(int client_fd)
+mpocket_request read_request(int client_fd)
 {
-    mcache_request request;
+    mpocket_request request;
     request.header = read_request_header(client_fd);
     request.code = 0;
 
@@ -69,7 +69,7 @@ mcache_request read_request(int client_fd)
 
     if (request.key == NULL)
     {
-        mcache_response_header header;
+        mpocket_response_header header;
         header.info = ERROR;
         header.items_count = 0;
         header.response_type = NO_DATA;
@@ -85,7 +85,7 @@ mcache_request read_request(int client_fd)
 
     if (request.data == NULL)
     {
-        mcache_response_header header;
+        mpocket_response_header header;
         header.info = ERROR;
         header.items_count = 0;
         header.response_type = NO_DATA;

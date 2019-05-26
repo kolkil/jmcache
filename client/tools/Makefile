@@ -12,10 +12,10 @@ prof: all
 main: lib.o console_client simple_insert
 
 console_client: lib.o console_client.c
-	$(CC) $(CFLAGS)  mcache_client.o console_client.c -o console_client.out
+	$(CC) $(CFLAGS)  mpocket_client.o console_client.c -o console_client.out
 
 simple_insert: lib.o simple_insert.c
-	$(CC) $(CFLAGS) mcache_client.o simple_insert.c -o simple_insert.out
+	$(CC) $(CFLAGS) mpocket_client.o simple_insert.c -o simple_insert.out
 
 lib.o:
 	$(CC) $(CFLAGS) -c ../lib/*

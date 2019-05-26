@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "../lib/mcache_client.h"
+#include "../lib/mpocket_client.h"
 
 #define BUFFER_SIZE 1024
 
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     if (argc != 3)
         return 0;
 
-    connection_params params = mcache_connect(argv[1], atoi(argv[2]));
+    connection_params params = mpocket_connect(argv[1], atoi(argv[2]));
 
     if (params.server_fd < 1)
     {
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     for (; scanf("%s", key_buffer) == 1 && scanf("%s", value_buffer) == 1; ++i)
     {
         long long int start_time = getMicrotime();
-        query_result qr = mcache_insert_strings(&params, key_buffer, value_buffer);
+        query_result qr = mpocket_insert_strings(&params, key_buffer, value_buffer);
         if (qr.code != 0)
             break;
         long long int stop_time = getMicrotime();

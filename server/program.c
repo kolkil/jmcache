@@ -38,7 +38,7 @@ int start_program(config_values *cnf)
     if (cnf->static_load)
     {
         FILE *f = fopen(cnf->save_path, "rb");
-        load_from_file(fileno(f), hash);
+        hash_table_load_from_file(hash, fileno(f));
         fclose(f);
     }
 
@@ -133,7 +133,7 @@ int start_program(config_values *cnf)
     if (cnf->static_save)
     {
         FILE *f = fopen(cnf->save_path, "w+b");
-        save_to_file(fileno(f), hash);
+        hash_table_save_to_file(hash, fileno(f));
         fclose(f);
     }
 

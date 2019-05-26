@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-int execute_insert(hash_table *hash, mcache_request request, int client_fd)
+int execute_insert(hash_table *hash, mpocket_request request, int client_fd)
 {
     simple_string key,
         data;
@@ -12,7 +12,7 @@ int execute_insert(hash_table *hash, mcache_request request, int client_fd)
     data.content = request.data;
     data.len = request.header.data_len;
 
-    mcache_response_header header;
+    mpocket_response_header header;
     header.info = OK;
     header.items_count = 0;
     header.response_type = NO_DATA;
@@ -33,13 +33,13 @@ int execute_insert(hash_table *hash, mcache_request request, int client_fd)
     return 0;
 }
 
-int execute_get(hash_table *hash, mcache_request request, int client_fd)
+int execute_get(hash_table *hash, mpocket_request request, int client_fd)
 {
     simple_string key;
     key.content = request.key;
     key.len = request.header.key_len;
 
-    mcache_response_header header;
+    mpocket_response_header header;
     header.info = OK;
     header.response_type = VALUE;
     header.items_count = 1;
@@ -65,13 +65,13 @@ int execute_get(hash_table *hash, mcache_request request, int client_fd)
     return ret;
 }
 
-int execute_pop(hash_table *hash, mcache_request request, int client_fd)
+int execute_pop(hash_table *hash, mpocket_request request, int client_fd)
 {
     simple_string key;
     key.content = request.key;
     key.len = request.header.key_len;
 
-    mcache_response_header header;
+    mpocket_response_header header;
     header.info = OK;
     header.response_type = VALUE;
     header.items_count = 1;
@@ -100,7 +100,7 @@ int execute_pop(hash_table *hash, mcache_request request, int client_fd)
 
 int execute_keys(hash_table *hash, int client_fd)
 {
-    mcache_response_header header;
+    mpocket_response_header header;
     header.info = OK;
     header.response_type = RKEYS;
     header.items_count = hash->count;
@@ -144,7 +144,7 @@ int execute_keys(hash_table *hash, int client_fd)
 
 int execute_all(hash_table *hash, int client_fd)
 {
-    mcache_response_header header;
+    mpocket_response_header header;
     header.info = OK;
     header.response_type = RALL;
     header.items_count = hash->count;
@@ -221,7 +221,7 @@ int execute_all(hash_table *hash, int client_fd)
 
 int execute_stats(hash_table *hash, int client_fd)
 {
-    mcache_response_header header;
+    mpocket_response_header header;
     header.info = OK;
     header.response_type = VALUE;
     header.items_count = 2;
@@ -241,7 +241,7 @@ int execute_stats(hash_table *hash, int client_fd)
     return 1;
 }
 
-int do_job(hash_table *hash, mcache_request request, int client_fd, connection_statistics *stats)
+int do_job(hash_table *hash, mpocket_request request, int client_fd, connection_statistics *stats)
 {
     long start_time = 0;
 
@@ -294,7 +294,7 @@ int do_job(hash_table *hash, mcache_request request, int client_fd, connection_s
 
 int read_data_send_response(hash_table *hash, int client_fd, connection_statistics *stats)
 {
-    mcache_request request = read_request(client_fd);
+    mpocket_request request = read_request(client_fd);
     if (request.code != 0)
         return 0;
 

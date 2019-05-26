@@ -27,7 +27,7 @@ enum
 } RESPONSE_TYPE;
 
 /*
-    mcache_request_header
+    mpocket_request_header
     _____________
     |_|____|____|
 
@@ -41,10 +41,10 @@ typedef struct
     uint8_t command;
     uint32_t key_len,
         data_len;
-} mcache_request_header;
+} mpocket_request_header;
 
 /*
-    mcache_response_header
+    mpocket_response_header
     __________
     |_|_|____|
     
@@ -58,7 +58,7 @@ typedef struct
     uint8_t info,
         response_type;
     uint32_t items_count;
-} mcache_response_header;
+} mpocket_response_header;
 
 typedef struct
 {
@@ -69,12 +69,12 @@ typedef struct
 typedef struct
 {
     int code;
-    mcache_request_header header;
+    mpocket_request_header header;
     uint8_t *key,
         *data;
-} mcache_request;
+} mpocket_request;
 
-mcache_request read_request(int);
-int send_response_header(int, mcache_response_header);
+mpocket_request read_request(int);
+int send_response_header(int, mpocket_response_header);
 int send_get_response(int, int, data_and_length);
 int send_data(int, uint8_t *, uint32_t);
