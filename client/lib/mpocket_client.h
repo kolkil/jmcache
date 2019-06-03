@@ -1,4 +1,4 @@
-#include "protocol.h"
+#include "../../shared/protocol.h"
 
 typedef struct
 {

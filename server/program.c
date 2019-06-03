@@ -1,7 +1,7 @@
 #include "program.h"
 #include "threading.h"
 #include "communication/socket.h"
-#include "utils/debug_print.h"
+#include "../shared/debug_print.h"
 
 #include <stdint.h>
 #include <stdio.h>
