@@ -137,15 +137,15 @@ void write_uint8(data_buffer *buffer, uint8_t value)
 
 void write_uint32(data_buffer *buffer, uint32_t value)
 {
-    for (uint32_t i = 0; i < sizeof(uint32_t); ++i)
-        buffer->data[buffer->position++] = (value >> ((3-i) * 8)) & 0xFF;
+    for (int32_t i = sizeof(uint32_t) - 1; i >= 0 ; --i)
+        buffer->data[buffer->position++] = value >> (i*8) & 0xFF;
 }
 
 uint8_t *read_data(int clien_fd, uint32_t len)
 {
     uint8_t *tmp = malloc(len * sizeof(uint8_t));
 
-    if (recv(clien_fd, tmp, len, MSG_NOSIGNAL) != len)
+    if (recv(clien_fd, tmp, len, MSG_NOSIGNAL) != (int32_t)len)
     {
         free(tmp);
         return NULL;

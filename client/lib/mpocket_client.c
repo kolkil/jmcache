@@ -75,7 +75,7 @@ data_and_length read_data_and_length(connection_params *params)
     data.data = NULL;
     data.length = 0;
 
-    uint32_t data_len = 0;
+    int32_t data_len = 0;
     if (recv(params->server_fd, &data_len, sizeof(uint32_t), MSG_NOSIGNAL) != sizeof(uint32_t))
     {
         return data;
@@ -99,7 +99,7 @@ get_result read_get_result(connection_params *params)
     result.result.code = 0;
     result.result.error_message = NULL;
 
-    uint32_t data_len = 0;
+    int32_t data_len = 0;
     if (recv(params->server_fd, &data_len, sizeof(uint32_t), MSG_NOSIGNAL) != sizeof(uint32_t))
     {
         close_and_reset(params);
