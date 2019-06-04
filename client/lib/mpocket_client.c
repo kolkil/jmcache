@@ -69,56 +69,25 @@ void close_and_reset(connection_params *params)
     params->server_fd = -1;
 }
 
-data_and_length read_data_and_length(connection_params *params)
-{
-    data_and_length data;
-    data.data = NULL;
-    data.length = 0;
-
-    int32_t data_len = 0;
-    if (recv(params->server_fd, &data_len, sizeof(uint32_t), MSG_NOSIGNAL) != sizeof(uint32_t))
-    {
-        return data;
-    }
-
-    data.length = data_len;
-
-    data.data = calloc(data_len, sizeof(uint8_t));
-    if (recv(params->server_fd, data.data, data_len, MSG_NOSIGNAL) != data_len)
-    {
-        data.length = 0;
-        free(data.data);
-        return data;
-    }
-    return data;
-}
-
 get_result read_get_result(connection_params *params)
 {
     get_result result;
     result.result.code = 0;
     result.result.error_message = NULL;
-
-    int32_t data_len = 0;
-    if (recv(params->server_fd, &data_len, sizeof(uint32_t), MSG_NOSIGNAL) != sizeof(uint32_t))
+    if ((result.data.length = read_length(params->server_fd)) == 0)
     {
         close_and_reset(params);
         result.result.code = 1;
         result.result.error_message = alloc_string("No data len");
         return result;
     }
-
-    uint8_t *read_data = calloc(sizeof(uint8_t), data_len);
-    if (recv(params->server_fd, read_data, data_len, MSG_NOSIGNAL) != data_len)
+    if ((result.data.data = read_data(params->server_fd, result.data.length)) == NULL)
     {
         close_and_reset(params);
         result.result.code = 2;
         result.result.error_message = alloc_string("Invalid data");
         return result;
     }
-
-    result.data.data = read_data;
-    result.data.length = data_len;
     return result;
 }
 
@@ -346,13 +315,13 @@ keys_result mpocket_keys(connection_params *params)
         return result;
     }
 
-    keys_result result;
+    keys_result result = { .count = response_header.items_count };
     result.keys = calloc(response_header.items_count, sizeof(data_and_length));
-    result.count = response_header.items_count;
 
     for (uint32_t i = 0; i < response_header.items_count; ++i)
     {
-        result.keys[i] = read_data_and_length(params);
+        result.keys[i].length = read_length(params->server_fd);
+        result.keys[i].data = read_data(params->server_fd, result.keys[i].length);
     }
     return result;
 }
@@ -399,8 +368,11 @@ all_result mpocket_all(connection_params *params)
 
     for (uint32_t i = 0; i < response_header.items_count; ++i)
     {
-        result.all_data[i][0] = read_data_and_length(params);
-        result.all_data[i][1] = read_data_and_length(params);
+        for (int j = 0; j < 2; ++j)
+        {
+            result.all_data[i][j].length = read_length(params->server_fd);
+            result.all_data[i][j].data = read_data(params->server_fd, result.all_data[i][j].length);
+        }
     }
     return result;
 }
@@ -438,12 +410,8 @@ stats_result mpocket_stats(connection_params *params)
         return result;
     }
 
-    uint32_t *tmp = (uint32_t *)read_data_and_length(params).data;
-    result.filled = (uint32_t)*tmp;
-    free(tmp);
-    tmp = (uint32_t *)read_data_and_length(params).data;
-    result.items_count = (uint32_t)*tmp;
-    free(tmp);
+    result.filled = read_length(params->server_fd);
+    result.items_count = read_length(params->server_fd);
 
     return result;
 }

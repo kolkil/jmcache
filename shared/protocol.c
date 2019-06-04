@@ -1,5 +1,5 @@
 #include "protocol.h"
-//#include "../../server/utils/debug_print.h"
+#include "debug_print.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -141,11 +141,11 @@ void write_uint32(data_buffer *buffer, uint32_t value)
         buffer->data[buffer->position++] = value >> (i*8) & 0xFF;
 }
 
-uint8_t *read_data(int clien_fd, uint32_t len)
+uint8_t *read_data(int fd, uint32_t len)
 {
     uint8_t *tmp = malloc(len * sizeof(uint8_t));
 
-    if (recv(clien_fd, tmp, len, MSG_NOSIGNAL) != (int32_t)len)
+    if (recv(fd, tmp, len, MSG_NOSIGNAL) != (int32_t)len)
     {
         free(tmp);
         return NULL;
@@ -170,4 +170,43 @@ int send_data(int fd, uint8_t *data, uint32_t len)
     debug_print_content_as_hex("Outgoing data", data, len);
 
     return 1;
+}
+
+int send_data_with_length(int fd, uint8_t *data, uint32_t len)
+{
+    send_length(fd, len);
+
+    return send_data(fd, data, len);
+}
+
+uint8_t *read_data_with_length(int fd)
+{
+    uint32_t len = read_length(fd);
+
+    return read_data(fd, len);
+}
+
+uint32_t read_length(int fd)
+{
+    data_buffer buffer = { .position = 0 };
+
+    if (recv(fd, &buffer.data, 4, MSG_NOSIGNAL) != 4)
+        return 0;
+    
+    uint32_t len = read_uint32(&buffer);
+
+    debug_print_content_as_hex("Incoming data length", &len, sizeof(len));
+
+    return len;
+}
+
+int send_length(int fd, uint32_t len)
+{
+    data_buffer buffer = { .position = 0 };
+
+    write_uint32(&buffer, len);
+
+    debug_print_content_as_hex("Outgoing data length", &len, sizeof(len));
+
+    return send(fd, &buffer.data, 4, 0);
 }

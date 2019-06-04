@@ -78,4 +78,8 @@ void write_uint32(data_buffer *, uint32_t);
 uint8_t *read_data(int, uint32_t);
 int send_data(int, uint8_t *, uint32_t);
 
-void debug_print_content_as_hex(char *, void *, size_t);
+int send_data_with_length(int, uint8_t *, uint32_t);
+uint8_t *read_data_with_length(int);
+
+uint32_t read_length(int);
+int send_length(int, uint32_t);
