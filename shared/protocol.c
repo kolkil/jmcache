@@ -121,12 +121,8 @@ uint8_t read_uint8(data_buffer *buffer)
 
 uint32_t read_uint32(data_buffer *buffer)
 {
-    uint32_t ret = 0;
-    for (uint32_t i = 0; i < sizeof(uint32_t); ++i)
-    {
-        ret <<= 8;
-        ret += buffer->data[buffer->position++];
-    }
+    uint32_t ret = ntohl(*(uint32_t *)&buffer->data[buffer->position]);
+    buffer->position += 4;
     return ret;
 }
 
@@ -137,8 +133,9 @@ void write_uint8(data_buffer *buffer, uint8_t value)
 
 void write_uint32(data_buffer *buffer, uint32_t value)
 {
-    for (int32_t i = sizeof(uint32_t) - 1; i >= 0 ; --i)
-        buffer->data[buffer->position++] = value >> (i*8) & 0xFF;
+    value = htonl(value);
+    memcpy(&buffer->data[buffer->position], &value, sizeof(value));
+    buffer->position += 4;
 }
 
 uint8_t *read_data(int fd, uint32_t len)
