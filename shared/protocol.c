@@ -142,10 +142,16 @@ uint8_t *read_data(int fd, uint32_t len)
 {
     uint8_t *tmp = malloc(len * sizeof(uint8_t));
 
-    if (recv(fd, tmp, len, MSG_NOSIGNAL) != (int32_t)len)
+    uint32_t read = 0;
+    while (read != len)
     {
-        free(tmp);
-        return NULL;
+        int32_t result = recv(fd, tmp, len - read, MSG_NOSIGNAL);
+        if (result == -1)
+        {
+            free(tmp);
+            return NULL;
+        }
+        read += result;
     }
     
     debug_print_content_as_hex("Incoming data", tmp, len);
@@ -169,18 +175,19 @@ int send_data(int fd, uint8_t *data, uint32_t len)
     return 1;
 }
 
-int send_data_with_length(int fd, uint8_t *data, uint32_t len)
+int send_length_and_data(int fd, length_and_data value)
 {
-    send_length(fd, len);
-
-    return send_data(fd, data, len);
+    return send_length(fd, value.length) && send_data(fd, value.data, value.length);
 }
 
-uint8_t *read_data_with_length(int fd)
+length_and_data read_length_and_data(int fd)
 {
-    uint32_t len = read_length(fd);
-
-    return read_data(fd, len);
+    length_and_data result =
+    { 
+        .length = read_length(fd),
+        .data = read_data(fd, result.length)
+    };
+    return result;
 }
 
 uint32_t read_length(int fd)
@@ -205,5 +212,5 @@ int send_length(int fd, uint32_t len)
 
     debug_print_content_as_hex("Outgoing data length", &len, sizeof(len));
 
-    return send(fd, &buffer.data, 4, 0);
+    return send(fd, &buffer.data, 4, 0) == 4;
 }

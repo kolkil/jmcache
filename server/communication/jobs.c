@@ -58,7 +58,7 @@ int execute_get(hash_table *hash, mpocket_request request, int client_fd)
     }
 
     send_response_header(client_fd, header);
-    int result = send_data_with_length(client_fd, value.content, value.len);
+    int result = send_length_and_data(client_fd, (length_and_data) { value.len, value.content });
     mtx_unlock(&hash->general_lock);
     free(request.key);
 
@@ -90,7 +90,7 @@ int execute_pop(hash_table *hash, mpocket_request request, int client_fd)
     }
 
     send_response_header(client_fd, header);
-    int result = send_data_with_length(client_fd, value.content, value.len);
+    int result = send_length_and_data(client_fd, (length_and_data) { value.len, value.content });
     hash_table_delete(hash, key);
     mtx_unlock(&hash->general_lock);
     free(request.key);
@@ -118,7 +118,7 @@ int execute_keys(hash_table *hash, int client_fd)
             continue;
         }
 
-        if ((result = send_data_with_length(client_fd, keys[i].content, keys[i].len)) == 0)
+        if ((result = send_length_and_data(client_fd, (length_and_data) { keys[i].len, keys[i].content })) == 0)
         {
             debug_print("execute_keys error sending key", 0);
             break;
@@ -151,13 +151,13 @@ int execute_all(hash_table *hash, int client_fd)
             continue;
         }
 
-        if ((result = send_data_with_length(client_fd, all_data[i][0].content, all_data[i][0].len)) == 0) //send key
+        if ((result = send_length_and_data(client_fd, (length_and_data) { all_data[i][0].len, all_data[i][0].content })) == 0)
         {
             debug_print("execute_keys error sending key", 0);
             break;
         }
 
-        if ((result = send_data_with_length(client_fd, all_data[i][1].content, all_data[i][1].len)) == 0) //send value
+        if ((result = send_length_and_data(client_fd, (length_and_data) { all_data[i][1].len, all_data[i][1].content })) == 0)
         {
             debug_print("execute_keys error sending key", 0);
             break;
@@ -170,7 +170,7 @@ int execute_all(hash_table *hash, int client_fd)
     free(all_data);
     mtx_unlock(&hash->general_lock);
 
-    return 1;
+    return result;
 }
 
 int execute_stats(hash_table *hash, int client_fd)

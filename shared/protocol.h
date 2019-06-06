@@ -45,7 +45,7 @@ typedef struct
 {
     uint32_t length;
     uint8_t *data;
-} data_and_length;
+} length_and_data;
 
 typedef struct
 {
@@ -78,8 +78,8 @@ void write_uint32(data_buffer *, uint32_t);
 uint8_t *read_data(int, uint32_t);
 int send_data(int, uint8_t *, uint32_t);
 
-int send_data_with_length(int, uint8_t *, uint32_t);
-uint8_t *read_data_with_length(int);
+int send_length_and_data(int, length_and_data);
+length_and_data read_length_and_data(int);
 
 uint32_t read_length(int);
 int send_length(int, uint32_t);

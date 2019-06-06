@@ -91,7 +91,7 @@ get_result read_get_result(connection_params *params)
     return result;
 }
 
-query_result mpocket_insert(connection_params *params, data_and_length key, data_and_length value)
+query_result mpocket_insert(connection_params *params, length_and_data key, length_and_data value)
 {
     query_result result;
     result.code = 0;
@@ -146,7 +146,7 @@ query_result mpocket_insert(connection_params *params, data_and_length key, data
     return result;
 }
 
-get_result mpocket_get(connection_params *params, data_and_length key)
+get_result mpocket_get(connection_params *params, length_and_data key)
 {
     if (key.length == 0)
     {
@@ -205,8 +205,8 @@ get_result mpocket_get(connection_params *params, data_and_length key)
 
 query_result mpocket_insert_strings(connection_params *params, char *key, char *value)
 {
-    data_and_length d_key = {(uint32_t)strlen(key), (uint8_t *)key};
-    data_and_length d_value = {(uint32_t)strlen(value), (uint8_t *)value};
+    length_and_data d_key = {(uint32_t)strlen(key), (uint8_t *)key};
+    length_and_data d_value = {(uint32_t)strlen(value), (uint8_t *)value};
 
     query_result result = mpocket_insert(params, d_key, d_value);
     return result;
@@ -214,11 +214,11 @@ query_result mpocket_insert_strings(connection_params *params, char *key, char *
 
 get_result mpocket_get_strings(connection_params *params, char *key)
 {
-    data_and_length d_key = {(uint32_t)strlen(key), (uint8_t *)key};
+    length_and_data d_key = {(uint32_t)strlen(key), (uint8_t *)key};
     return mpocket_get(params, d_key);
 }
 
-get_result mpocket_pop(connection_params *params, data_and_length key)
+get_result mpocket_pop(connection_params *params, length_and_data key)
 {
     if (key.length == 0)
     {
@@ -277,7 +277,7 @@ get_result mpocket_pop(connection_params *params, data_and_length key)
 
 get_result mpocket_pop_strings(connection_params *params, char *key)
 {
-    data_and_length d_key = {(uint32_t)strlen(key), (uint8_t *)key};
+    length_and_data d_key = {(uint32_t)strlen(key), (uint8_t *)key};
     return mpocket_pop(params, d_key);
 }
 
@@ -316,13 +316,10 @@ keys_result mpocket_keys(connection_params *params)
     }
 
     keys_result result = { .count = response_header.items_count };
-    result.keys = calloc(response_header.items_count, sizeof(data_and_length));
+    result.keys = calloc(response_header.items_count, sizeof(length_and_data));
 
     for (uint32_t i = 0; i < response_header.items_count; ++i)
-    {
-        result.keys[i].length = read_length(params->server_fd);
-        result.keys[i].data = read_data(params->server_fd, result.keys[i].length);
-    }
+        result.keys[i] = read_length_and_data(params->server_fd);
     return result;
 }
 
@@ -359,20 +356,17 @@ all_result mpocket_all(connection_params *params)
         return result;
     }
 
-    result.all_data = calloc(response_header.items_count, sizeof(data_and_length *));
+    result.all_data = calloc(response_header.items_count, sizeof(length_and_data *));
 
     for (uint32_t i = 0; i < response_header.items_count; ++i)
-        result.all_data[i] = calloc(2, sizeof(data_and_length));
+        result.all_data[i] = calloc(2, sizeof(length_and_data));
 
     result.count = response_header.items_count;
 
     for (uint32_t i = 0; i < response_header.items_count; ++i)
     {
-        for (int j = 0; j < 2; ++j)
-        {
-            result.all_data[i][j].length = read_length(params->server_fd);
-            result.all_data[i][j].data = read_data(params->server_fd, result.all_data[i][j].length);
-        }
+        result.all_data[i][0]= read_length_and_data(params->server_fd);
+        result.all_data[i][1]= read_length_and_data(params->server_fd);
     }
     return result;
 }
