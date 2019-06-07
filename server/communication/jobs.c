@@ -1,5 +1,5 @@
 #include "jobs.h"
-#include "../utils/debug_print.h"
+#include "../../shared/debug_print.h"
 
 #include <stdlib.h>
 
@@ -25,12 +25,12 @@ int execute_insert(hash_table *hash, mpocket_request request, int client_fd)
     {
         header.info = ERROR;
         send_response_header(client_fd, header);
-        return 1;
+        return 0;
     }
 
     send_response_header(client_fd, header);
 
-    return 0;
+    return 1;
 }
 
 int execute_get(hash_table *hash, mpocket_request request, int client_fd)
@@ -54,48 +54,30 @@ int execute_get(hash_table *hash, mpocket_request request, int client_fd)
         send_response_header(client_fd, header);
         mtx_unlock(&hash->general_lock);
 
-        return 1;
+        return 0;
     }
 
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value.len, sizeof(value.len));
-    int ret = send_data(client_fd, value.content, value.len);
+    int result = send_length_and_data(client_fd, (length_and_data){value.len, value.content});
     mtx_unlock(&hash->general_lock);
+    free(request.key);
 
-    return ret;
+    return result;
 }
 
 int execute_pop(hash_table *hash, mpocket_request request, int client_fd)
 {
+    execute_get(hash, request, client_fd);
+
     simple_string key;
     key.content = request.key;
     key.len = request.header.key_len;
 
-    mpocket_response_header header;
-    header.info = OK;
-    header.response_type = VALUE;
-    header.items_count = 1;
-
-    mtx_lock(&hash->general_lock);
-    simple_string value = hash_table_get(hash, key);
-
-    if (value.content == NULL)
-    {
-        header.response_type = NO_DATA;
-        header.items_count = 0;
-        send_response_header(client_fd, header);
-        mtx_unlock(&hash->general_lock);
-
-        return 1;
-    }
-
-    send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value.len, sizeof(value.len));
-    int ret = send_data(client_fd, value.content, value.len);
     hash_table_delete(hash, key);
     mtx_unlock(&hash->general_lock);
+    free(request.key);
 
-    return ret;
+    return 1;
 }
 
 int execute_keys(hash_table *hash, int client_fd)
@@ -109,6 +91,7 @@ int execute_keys(hash_table *hash, int client_fd)
     simple_string *keys = hash_table_get_keys(hash);
     send_response_header(client_fd, header);
 
+    int result = 1;
     for (uint32_t i = 0; i < hash->count; ++i)
     {
         if (keys[i].content == NULL)
@@ -117,29 +100,17 @@ int execute_keys(hash_table *hash, int client_fd)
             continue;
         }
 
-        if (!send_data(client_fd, (uint8_t *)&(keys[i].len), sizeof(uint32_t)))
+        if ((result = send_length_and_data(client_fd, (length_and_data){keys[i].len, keys[i].content})) == 0)
         {
-            free(keys);
-            debug_print("execute_keys error sending key size", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
-        }
-
-        if (keys[i].content != NULL && !send_data(client_fd, keys[i].content, keys[i].len))
-        {
-            free(keys);
             debug_print("execute_keys error sending key", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
+            break;
         }
     }
 
     free(keys);
     mtx_unlock(&hash->general_lock);
 
-    return 1;
+    return result;
 }
 
 int execute_all(hash_table *hash, int client_fd)
@@ -153,6 +124,7 @@ int execute_all(hash_table *hash, int client_fd)
     simple_string **all_data = hash_table_get_all_data(hash);
     send_response_header(client_fd, header);
 
+    int result = 1;
     for (uint32_t i = 0; i < hash->count; ++i)
     {
         if (all_data[i][0].content == NULL)
@@ -161,52 +133,16 @@ int execute_all(hash_table *hash, int client_fd)
             continue;
         }
 
-        if (!send_data(client_fd, (uint8_t *)&(all_data[i][0].len), sizeof(uint32_t))) //send key len
+        if ((result = send_length_and_data(client_fd, (length_and_data){all_data[i][0].len, all_data[i][0].content})) == 0)
         {
-            for (uint32_t c = 0; c < hash->count; ++c)
-                free(all_data[c]);
-
-            free(all_data);
-            debug_print("execute_keys error sending key size", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
-        }
-
-        if (!send_data(client_fd, all_data[i][0].content, all_data[i][0].len)) //send key
-        {
-            for (uint32_t c = 0; c < hash->count; ++c)
-                free(all_data[c]);
-
-            free(all_data);
             debug_print("execute_keys error sending key", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
+            break;
         }
 
-        if (!send_data(client_fd, (uint8_t *)&(all_data[i][1].len), sizeof(uint32_t))) //send key len
+        if ((result = send_length_and_data(client_fd, (length_and_data){all_data[i][1].len, all_data[i][1].content})) == 0)
         {
-            for (uint32_t c = 0; c < hash->count; ++c)
-                free(all_data[c]);
-
-            free(all_data);
-            debug_print("execute_keys error sending key size", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
-        }
-
-        if (!send_data(client_fd, all_data[i][1].content, all_data[i][1].len)) //send value
-        {
-            for (uint32_t c = 0; c < hash->count; ++c)
-                free(all_data[c]);
-
-            free(all_data);
             debug_print("execute_keys error sending key", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
+            break;
         }
     }
 
@@ -216,7 +152,7 @@ int execute_all(hash_table *hash, int client_fd)
     free(all_data);
     mtx_unlock(&hash->general_lock);
 
-    return 1;
+    return result;
 }
 
 int execute_stats(hash_table *hash, int client_fd)
@@ -229,14 +165,11 @@ int execute_stats(hash_table *hash, int client_fd)
     mtx_lock(&hash->general_lock);
     uint32_t filled = hash->filled,
              count = hash->count;
-    uint32_t len = 4;
     mtx_unlock(&hash->general_lock);
 
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&len, len);
-    send_data(client_fd, (uint8_t *)&filled, len);
-    send_data(client_fd, (uint8_t *)&len, len);
-    send_data(client_fd, (uint8_t *)&count, len);
+    send_length(client_fd, filled);
+    send_length(client_fd, count);
 
     return 1;
 }
@@ -244,52 +177,53 @@ int execute_stats(hash_table *hash, int client_fd)
 int do_job(hash_table *hash, mpocket_request request, int client_fd, connection_statistics *stats)
 {
     long start_time = 0;
+    int result = 0;
 
     switch (request.header.command)
     {
     case INSERT:
         start_time = microtime_now();
-        execute_insert(hash, request, client_fd);
+        result = execute_insert(hash, request, client_fd);
         ++stats->insert.count;
         stats->insert.time += microtime_now() - start_time;
         break;
 
     case GET:
         start_time = microtime_now();
-        execute_get(hash, request, client_fd);
+        result = execute_get(hash, request, client_fd);
         ++stats->get.count;
         stats->get.time += microtime_now() - start_time;
         break;
 
     case POP:
         start_time = microtime_now();
-        execute_pop(hash, request, client_fd);
+        result = execute_pop(hash, request, client_fd);
         ++stats->pop.count;
         stats->pop.time += microtime_now() - start_time;
         break;
 
     case KEYS:
         start_time = microtime_now();
-        execute_keys(hash, client_fd);
+        result = execute_keys(hash, client_fd);
         ++stats->keys.count;
         stats->keys.time += microtime_now() - start_time;
         break;
 
     case ALL:
         start_time = microtime_now();
-        execute_all(hash, client_fd);
+        result = execute_all(hash, client_fd);
         ++stats->all.count;
         stats->all.time += microtime_now() - start_time;
         break;
 
     case STATS:
-        execute_stats(hash, client_fd);
+        result = execute_stats(hash, client_fd);
         break;
 
     default:
         break;
     }
-    return 0;
+    return result;
 }
 
 int read_data_send_response(hash_table *hash, int client_fd, connection_statistics *stats)
@@ -298,7 +232,14 @@ int read_data_send_response(hash_table *hash, int client_fd, connection_statisti
     if (request.code != 0)
         return 0;
 
-    int result = do_job(hash, request, client_fd, stats);
+    if (!do_job(hash, request, client_fd, stats))
+    {
+        if (request.key != NULL)
+            free(request.key);
 
-    return !result;
+        if (request.data != NULL)
+            free(request.data);
+    }
+
+    return 1;
 }

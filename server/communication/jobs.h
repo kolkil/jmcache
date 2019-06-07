@@ -1,5 +1,5 @@
 #include "../storage/hash_table.h"
-#include "protocol.h"
+#include "../../shared/protocol.h"
 
 typedef struct
 {

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "utils/options.h"
-#include "utils/debug_print.h"
+#include "../shared/debug_print.h"
 #include "program.h"
 
 int main(int argc, char **argv)

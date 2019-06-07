@@ -2,7 +2,8 @@
 
 #include <threads.h>
 
-#define PRIME_LENGTH 1021
+// #define PRIME_LENGTH 1021 
+#define PRIME_LENGTH 20011
 
 typedef struct linked_container linked_container;
 

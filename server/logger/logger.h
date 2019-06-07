@@ -1,11 +1,14 @@
 #include "queue.h"
 
+#include <stdio.h>
+
 typedef struct
 {
     char *path;
     int fd,
         file_existed;
     log_queue *queue;
+    FILE *file;
 } logger;
 
 logger *logger_new(char *);

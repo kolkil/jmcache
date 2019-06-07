@@ -72,6 +72,48 @@ void debug_print_raw_string_int(char *str, int v)
     return;
 }
 
+void debug_print_content_as_hex(char *title, void *str, size_t size)
+{
+#ifdef DEBUG
+    printf("%s (%zu bytes):\n", title, size);
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (i > 0 && i % 4 == 0)
+            printf("\n");
+        printf("%.2x ", (((unsigned int)((char *)str)[i]) & 0xff));
+    }
+    printf("\n");
+#endif
+    if (title == NULL)
+        title = NULL;
+    if (str == NULL)
+        str = NULL;
+    if (size == 0)
+        size = 0;
+    return;
+}
+
+void debug_print_content_as_dec(char *title, void *str, size_t size)
+{
+#ifdef DEBUG
+    printf("%s (%zu bytes):\n", title, size);
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (i > 0 && i % 4 == 0)
+            printf("\n");
+        printf("%3d ", (((unsigned int)((char *)str)[i])));
+    }
+    printf("\n");
+#endif
+    if (title == NULL)
+        title = NULL;
+    if (str == NULL)
+        str = NULL;
+    if (size == 0)
+        size = 0;
+    return;
+}
+
 long int microtime_now()
 {
     struct timeval currentTime;

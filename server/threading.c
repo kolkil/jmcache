@@ -1,5 +1,5 @@
 #include "threading.h"
-#include "utils/debug_print.h"
+#include "../shared/debug_print.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -17,7 +17,6 @@ int logger_thread(void *data)
 
     while (ltd->stop != 1)
     {
-        debug_print_int(ltd->stop);
         char *data;
 
         while ((data = log_dequeue(ltd->log->queue)) != NULL)
@@ -99,7 +98,9 @@ int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_f
             close(t_data[k].fd);
             return -1;
         }
+
         t_data[k].busy = 1;
+
         return k;
     }
 

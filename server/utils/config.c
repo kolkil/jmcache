@@ -1,5 +1,5 @@
 #include "config.h"
-#include "../utils/debug_print.h"
+#include "../../shared/debug_print.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,6 +86,7 @@ config_values *read_config(char *path)
         memset(value_buffer, 0, 1024);
     }
 
+    fclose(f);
     debug_print("file reading loop", 0);
 
     return config;

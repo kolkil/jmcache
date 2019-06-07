@@ -1,4 +1,4 @@
-#include "protocol.h"
+#include "../../shared/protocol.h"
 
 typedef struct
 {
@@ -16,20 +16,20 @@ typedef struct
 typedef struct
 {
     query_result result;
-    data_and_length data;
+    length_and_data data;
 } get_result;
 
 typedef struct
 {
     query_result result;
-    data_and_length *keys;
+    length_and_data *keys;
     int count;
 } keys_result;
 
 typedef struct
 {
     query_result result;
-    data_and_length **all_data;
+    length_and_data **all_data;
     int count;
 } all_result;
 
@@ -43,13 +43,13 @@ typedef struct
 connection_params mpocket_connect(char *, int);
 int mpocket_dissconnect(connection_params *);
 
-query_result mpocket_insert(connection_params *, data_and_length, data_and_length);
+query_result mpocket_insert(connection_params *, length_and_data, length_and_data);
 query_result mpocket_insert_strings(connection_params *, char *, char *);
 
-get_result mpocket_get(connection_params *, data_and_length);
+get_result mpocket_get(connection_params *, length_and_data);
 get_result mpocket_get_strings(connection_params *, char *);
 
-get_result mpocket_pop(connection_params *, data_and_length);
+get_result mpocket_pop(connection_params *, length_and_data);
 get_result mpocket_pop_strings(connection_params *, char *);
 
 keys_result mpocket_keys(connection_params *);
