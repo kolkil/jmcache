@@ -105,7 +105,7 @@ mpocket_response_header read_response_header(int server_fd)
 {
     mpocket_response_header header = {.info = UNKNOWN_ERROR};
 
-    if (recv(server_fd, &header, sizeof(header), MSG_NOSIGNAL) != 6)
+    if (recv(server_fd, &header, sizeof(header), MSG_NOSIGNAL) != sizeof(header))
         return header;
 
     return mpocket_response_header_ntoh(header);

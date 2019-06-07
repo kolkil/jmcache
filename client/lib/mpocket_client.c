@@ -1,4 +1,5 @@
 #include "mpocket_client.h"
+#include "../../shared/debug_print.h"
 
 #include <stdio.h>
 #include <sys/socket.h>
@@ -298,6 +299,7 @@ keys_result mpocket_keys(connection_params *params)
     }
 
     mpocket_response_header response_header = read_response_header(params->server_fd);
+    debug_print_raw_int(response_header.items_count);
 
     if (response_header.info != OK)
     {
@@ -315,11 +317,12 @@ keys_result mpocket_keys(connection_params *params)
         return result;
     }
 
-    keys_result result = { .count = response_header.items_count };
+    keys_result result = {.count = response_header.items_count};
     result.keys = calloc(response_header.items_count, sizeof(length_and_data));
 
     for (uint32_t i = 0; i < response_header.items_count; ++i)
         result.keys[i] = read_length_and_data(params->server_fd);
+
     return result;
 }
 
@@ -365,8 +368,8 @@ all_result mpocket_all(connection_params *params)
 
     for (uint32_t i = 0; i < response_header.items_count; ++i)
     {
-        result.all_data[i][0]= read_length_and_data(params->server_fd);
-        result.all_data[i][1]= read_length_and_data(params->server_fd);
+        result.all_data[i][0] = read_length_and_data(params->server_fd);
+        result.all_data[i][1] = read_length_and_data(params->server_fd);
     }
     return result;
 }
