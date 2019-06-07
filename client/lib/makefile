@@ -12,7 +12,7 @@ prof: all
 main: lib.o
 
 lib.o:
-	$(CC) $(CFLAGS) -shared -o mpocket_client.so -fPIC mpocket_client.* protocol.*
+	$(CC) $(CFLAGS) -shared -o mpocket_client.so -fPIC mpocket_client.c ../../shared/*
 
 clean:
 	rm -f *.o; rm -f *.gch; rm -f ./*/*.gch;

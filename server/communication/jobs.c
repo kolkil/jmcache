@@ -1,5 +1,5 @@
 #include "jobs.h"
-#include "../utils/debug_print.h"
+#include "../../shared/debug_print.h"
 
 #include <stdlib.h>
 
@@ -58,12 +58,11 @@ int execute_get(hash_table *hash, mpocket_request request, int client_fd)
     }
 
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value.len, sizeof(value.len));
-    int ret = send_data(client_fd, value.content, value.len);
+    int result = send_length_and_data(client_fd, (length_and_data) { value.len, value.content });
     mtx_unlock(&hash->general_lock);
     free(request.key);
 
-    return ret;
+    return result;
 }
 
 int execute_pop(hash_table *hash, mpocket_request request, int client_fd)
@@ -91,13 +90,12 @@ int execute_pop(hash_table *hash, mpocket_request request, int client_fd)
     }
 
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&value.len, sizeof(value.len));
-    int ret = send_data(client_fd, value.content, value.len);
+    int result = send_length_and_data(client_fd, (length_and_data) { value.len, value.content });
     hash_table_delete(hash, key);
     mtx_unlock(&hash->general_lock);
     free(request.key);
 
-    return ret;
+    return result;
 }
 
 int execute_keys(hash_table *hash, int client_fd)
@@ -111,6 +109,7 @@ int execute_keys(hash_table *hash, int client_fd)
     simple_string *keys = hash_table_get_keys(hash);
     send_response_header(client_fd, header);
 
+    int result = 1;
     for (uint32_t i = 0; i < hash->count; ++i)
     {
         if (keys[i].content == NULL)
@@ -119,29 +118,17 @@ int execute_keys(hash_table *hash, int client_fd)
             continue;
         }
 
-        if (!send_data(client_fd, (uint8_t *)&(keys[i].len), sizeof(uint32_t)))
+        if ((result = send_length_and_data(client_fd, (length_and_data) { keys[i].len, keys[i].content })) == 0)
         {
-            free(keys);
-            debug_print("execute_keys error sending key size", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
-        }
-
-        if (keys[i].content != NULL && !send_data(client_fd, keys[i].content, keys[i].len))
-        {
-            free(keys);
             debug_print("execute_keys error sending key", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
+            break;
         }
     }
 
     free(keys);
     mtx_unlock(&hash->general_lock);
 
-    return 1;
+    return result;
 }
 
 int execute_all(hash_table *hash, int client_fd)
@@ -155,6 +142,7 @@ int execute_all(hash_table *hash, int client_fd)
     simple_string **all_data = hash_table_get_all_data(hash);
     send_response_header(client_fd, header);
 
+    int result = 1;
     for (uint32_t i = 0; i < hash->count; ++i)
     {
         if (all_data[i][0].content == NULL)
@@ -163,52 +151,16 @@ int execute_all(hash_table *hash, int client_fd)
             continue;
         }
 
-        if (!send_data(client_fd, (uint8_t *)&(all_data[i][0].len), sizeof(uint32_t))) //send key len
+        if ((result = send_length_and_data(client_fd, (length_and_data) { all_data[i][0].len, all_data[i][0].content })) == 0)
         {
-            for (uint32_t c = 0; c < hash->count; ++c)
-                free(all_data[c]);
-
-            free(all_data);
-            debug_print("execute_keys error sending key size", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
-        }
-
-        if (!send_data(client_fd, all_data[i][0].content, all_data[i][0].len)) //send key
-        {
-            for (uint32_t c = 0; c < hash->count; ++c)
-                free(all_data[c]);
-
-            free(all_data);
             debug_print("execute_keys error sending key", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
+            break;
         }
 
-        if (!send_data(client_fd, (uint8_t *)&(all_data[i][1].len), sizeof(uint32_t))) //send key len
+        if ((result = send_length_and_data(client_fd, (length_and_data) { all_data[i][1].len, all_data[i][1].content })) == 0)
         {
-            for (uint32_t c = 0; c < hash->count; ++c)
-                free(all_data[c]);
-
-            free(all_data);
-            debug_print("execute_keys error sending key size", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
-        }
-
-        if (!send_data(client_fd, all_data[i][1].content, all_data[i][1].len)) //send value
-        {
-            for (uint32_t c = 0; c < hash->count; ++c)
-                free(all_data[c]);
-
-            free(all_data);
             debug_print("execute_keys error sending key", 0);
-            mtx_unlock(&hash->general_lock);
-
-            return 0;
+            break;
         }
     }
 
@@ -218,7 +170,7 @@ int execute_all(hash_table *hash, int client_fd)
     free(all_data);
     mtx_unlock(&hash->general_lock);
 
-    return 1;
+    return result;
 }
 
 int execute_stats(hash_table *hash, int client_fd)
@@ -231,14 +183,11 @@ int execute_stats(hash_table *hash, int client_fd)
     mtx_lock(&hash->general_lock);
     uint32_t filled = hash->filled,
              count = hash->count;
-    uint32_t len = 4;
     mtx_unlock(&hash->general_lock);
 
     send_response_header(client_fd, header);
-    send_data(client_fd, (uint8_t *)&len, len);
-    send_data(client_fd, (uint8_t *)&filled, len);
-    send_data(client_fd, (uint8_t *)&len, len);
-    send_data(client_fd, (uint8_t *)&count, len);
+    send_length(client_fd, filled);
+    send_length(client_fd, count);
 
     return 1;
 }

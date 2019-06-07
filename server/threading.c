@@ -1,5 +1,5 @@
 #include "threading.h"
-#include "utils/debug_print.h"
+#include "../shared/debug_print.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -17,7 +17,6 @@ int logger_thread(void *data)
 
     while (ltd->stop != 1)
     {
-        debug_print_int(ltd->stop);
         char *data;
 
         while ((data = log_dequeue(ltd->log->queue)) != NULL)

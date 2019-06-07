@@ -1,5 +1,5 @@
 #include "config.h"
-#include "../utils/debug_print.h"
+#include "../../shared/debug_print.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -11,8 +11,8 @@ prof: all
 
 test: tests.o clean
 
-main: storage.o communication.o utils.o program.o logger.o threading.o main.c
-	$(CC) $(CFLAGS) threading.o queue.o logger.o jobs.o protocol.o debug_print.o program.o vector.o hash_table.o data.o socket.o config.o options.o main.c -o mpocket-server.out -lpthread
+main: storage.o communication.o utils.o program.o logger.o threading.o shared.o main.c
+	$(CC) $(CFLAGS) threading.o queue.o logger.o jobs.o debug_print.o program.o vector.o protocol.o hash_table.o data.o socket.o config.o options.o main.c -o mpocket-server.out -lpthread
 
 threading.o:
 	$(CC) $(CFLAGS) -c threading.c threading.h
@@ -35,5 +35,8 @@ program.o:
 logger.o:
 	$(CC) $(CFLAGS) -c logger/*
 
+shared.o:
+	$(CC) $(CFLAGS) -c ../shared/*
+
 clean:
-	rm -f *.o; rm -f *.gch; rm -f ./*/*.gch;
+	rm -f *.o; rm -f *.gch; rm -f ./*/*.gch; rm -f ../shared/*.gch;

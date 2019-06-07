@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 enum
 {
@@ -26,32 +27,12 @@ enum
     RALL = 3
 } RESPONSE_TYPE;
 
-/*
-    mpocket_request_header
-    _____________
-    |_|____|____|
-
-    first byte - command
-    next four bytes - key length
-    next four bytes - data length
-*/
-
 typedef struct
 {
     uint8_t command;
     uint32_t key_len,
         data_len;
 } mpocket_request_header;
-
-/*
-    mpocket_response_header
-    __________
-    |_|_|____|
-    
-    first byte - execution info
-    second byte - type of response
-    next four bytes - number of items
-*/
 
 typedef struct
 {
@@ -62,19 +43,43 @@ typedef struct
 
 typedef struct
 {
-    uint8_t *data;
     uint32_t length;
-} data_and_length;
+    uint8_t *data;
+} length_and_data;
 
 typedef struct
 {
-    int code;
+    uint32_t code;
     mpocket_request_header header;
     uint8_t *key,
         *data;
 } mpocket_request;
 
+typedef struct
+{
+    uint32_t position;
+    uint8_t data[12];
+} data_buffer;
+
 mpocket_request read_request(int);
-int send_response_header(int, mpocket_response_header);
-int send_get_response(int, int, data_and_length);
+
+mpocket_request_header read_request_header(int);
+int32_t send_request_header(int, mpocket_request_header);
+
+mpocket_response_header read_response_header(int);
+void send_response_header(int, mpocket_response_header);
+
+uint8_t read_uint8(data_buffer *);
+uint32_t read_uint32(data_buffer *);
+
+void write_uint8(data_buffer *, uint8_t);
+void write_uint32(data_buffer *, uint32_t);
+
+uint8_t *read_data(int, uint32_t);
 int send_data(int, uint8_t *, uint32_t);
+
+int send_length_and_data(int, length_and_data);
+length_and_data read_length_and_data(int);
+
+uint32_t read_length(int);
+int send_length(int, uint32_t);
