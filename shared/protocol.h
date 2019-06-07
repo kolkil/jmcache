@@ -36,9 +36,9 @@ typedef struct
 
 typedef struct
 {
-    uint8_t info,
-        response_type;
-    uint32_t items_count;
+    uint8_t info;
+    uint32_t response_type,
+        items_count;
 } mpocket_response_header;
 
 typedef struct
@@ -49,17 +49,11 @@ typedef struct
 
 typedef struct
 {
-    uint32_t code;
     mpocket_request_header header;
+    uint32_t code;
     uint8_t *key,
         *data;
 } mpocket_request;
-
-typedef struct
-{
-    uint32_t position;
-    uint8_t data[12];
-} data_buffer;
 
 mpocket_request read_request(int);
 
@@ -68,12 +62,6 @@ int32_t send_request_header(int, mpocket_request_header);
 
 mpocket_response_header read_response_header(int);
 void send_response_header(int, mpocket_response_header);
-
-uint8_t read_uint8(data_buffer *);
-uint32_t read_uint32(data_buffer *);
-
-void write_uint8(data_buffer *, uint8_t);
-void write_uint32(data_buffer *, uint32_t);
 
 uint8_t *read_data(int, uint32_t);
 int send_data(int, uint8_t *, uint32_t);

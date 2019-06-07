@@ -7,9 +7,41 @@
 #include <unistd.h>
 #include <netdb.h>
 
+mpocket_request_header mpocket_request_header_hton(mpocket_request_header header)
+{
+    header.key_len = htonl(header.key_len);
+    header.data_len = htonl(header.data_len);
+
+    return header;
+}
+
+mpocket_response_header mpocket_response_header_hton(mpocket_response_header header)
+{
+    header.items_count = htonl(header.items_count);
+    header.response_type = htonl(header.response_type);
+
+    return header;
+}
+
+mpocket_request_header mpocket_request_header_ntoh(mpocket_request_header header)
+{
+    header.key_len = ntohl(header.key_len);
+    header.data_len = ntohl(header.data_len);
+
+    return header;
+}
+
+mpocket_response_header mpocket_response_header_ntoh(mpocket_response_header header)
+{
+    header.response_type = ntohl(header.response_type);
+    header.items_count = ntohl(header.items_count);
+
+    return header;
+}
+
 mpocket_request read_request(int client_fd)
 {
-    mpocket_request request = { .key = NULL, .data = NULL };
+    mpocket_request request = {.key = NULL, .data = NULL};
     request.header = read_request_header(client_fd);
     request.code = 0;
 
@@ -56,94 +88,40 @@ mpocket_request read_request(int client_fd)
 
 mpocket_request_header read_request_header(int client_fd)
 {
-    data_buffer buffer = { .position = 0 };
-
-    recv(client_fd, &buffer.data, 9, MSG_NOSIGNAL);
-    
     mpocket_request_header header;
-    header.command = read_uint8(&buffer);
-    header.key_len = read_uint32(&buffer);
-    header.data_len = read_uint32(&buffer);
+    recv(client_fd, &header, sizeof(header), MSG_NOSIGNAL);
 
-    debug_print_content_as_hex("Incoming request header", &header, sizeof(header));
-
-    return header;
+    return mpocket_request_header_ntoh(header);
 }
 
 int32_t send_request_header(int server_fd, mpocket_request_header header)
 {
-    data_buffer buffer = { .position = 0 };
+    header = mpocket_request_header_hton(header);
 
-    write_uint8(&buffer, header.command);
-    write_uint32(&buffer, header.key_len);
-    write_uint32(&buffer, header.data_len);
-
-    debug_print_content_as_hex("Outgoing request header", &header, sizeof(header));
-
-    return send(server_fd, &buffer.data, 9, MSG_NOSIGNAL) != 9 ? -1 : 0;
+    return send(server_fd, &header, sizeof(header), MSG_NOSIGNAL) != sizeof(header) ? -1 : 0;
 }
 
 mpocket_response_header read_response_header(int server_fd)
 {
-    data_buffer buffer = { .position = 0 };
+    mpocket_response_header header = {.info = UNKNOWN_ERROR};
 
-    mpocket_response_header header = { .info = UNKNOWN_ERROR };
-
-    if (recv(server_fd, &buffer.data, 6, MSG_NOSIGNAL) != 6)
+    if (recv(server_fd, &header, sizeof(header), MSG_NOSIGNAL) != 6)
         return header;
-    
-    header.info = read_uint8(&buffer);
-    header.response_type = read_uint8(&buffer);
-    header.items_count = read_uint32(&buffer);
 
-    debug_print_content_as_hex("Incoming response header", &header, sizeof(header));
-
-    return header;
+    return mpocket_response_header_ntoh(header);
 }
 
 void send_response_header(int client_fd, mpocket_response_header header)
 {
-    data_buffer buffer = { .position = 0 };
-
-    write_uint8(&buffer, header.info);
-    write_uint8(&buffer, header.response_type);
-    write_uint32(&buffer, header.items_count);
-
-    debug_print_content_as_hex("Outgoing response header", &header, sizeof(header));
-
-    send(client_fd, &buffer.data, 6, 0);
-}
-
-uint8_t read_uint8(data_buffer *buffer)
-{
-    return buffer->data[buffer->position++];
-}
-
-uint32_t read_uint32(data_buffer *buffer)
-{
-    uint32_t ret = ntohl(*(uint32_t *)&buffer->data[buffer->position]);
-    buffer->position += 4;
-    return ret;
-}
-
-void write_uint8(data_buffer *buffer, uint8_t value)
-{
-    buffer->data[buffer->position++] = value;
-}
-
-void write_uint32(data_buffer *buffer, uint32_t value)
-{
-    value = htonl(value);
-    memcpy(&buffer->data[buffer->position], &value, sizeof(value));
-    buffer->position += 4;
+    header = mpocket_response_header_hton(header);
+    send(client_fd, &header, sizeof(header), MSG_NOSIGNAL);
 }
 
 uint8_t *read_data(int fd, uint32_t len)
 {
     uint8_t *tmp = malloc(len * sizeof(uint8_t));
 
-    uint32_t read = 0;
-    while (read != len)
+    for (uint32_t read = 0; read != len;)
     {
         int32_t result = recv(fd, tmp, len - read, MSG_NOSIGNAL);
         if (result == -1)
@@ -153,24 +131,19 @@ uint8_t *read_data(int fd, uint32_t len)
         }
         read += result;
     }
-    
-    debug_print_content_as_hex("Incoming data", tmp, len);
 
     return tmp;
 }
 
 int send_data(int fd, uint8_t *data, uint32_t len)
 {
-    uint32_t sent = 0;
-    while (sent != len)
+    for (uint32_t sent = 0; sent != len;)
     {
-        int32_t result = send(fd, data + sent, len - (uint32_t)sent, 0);
+        int32_t result = send(fd, data + sent, len - (uint32_t)sent, MSG_NOSIGNAL);
         if (result == -1)
             return 0;
         sent += result;
     }
-
-    debug_print_content_as_hex("Outgoing data", data, len);
 
     return 1;
 }
@@ -183,34 +156,25 @@ int send_length_and_data(int fd, length_and_data value)
 length_and_data read_length_and_data(int fd)
 {
     length_and_data result =
-    { 
-        .length = read_length(fd),
-        .data = read_data(fd, result.length)
-    };
+        {
+            .length = read_length(fd),
+            .data = read_data(fd, result.length)};
+
     return result;
 }
 
 uint32_t read_length(int fd)
 {
-    data_buffer buffer = { .position = 0 };
-
-    if (recv(fd, &buffer.data, 4, MSG_NOSIGNAL) != 4)
+    uint32_t len = 0;
+    if (recv(fd, &len, sizeof(len), MSG_NOSIGNAL) != sizeof(len))
         return 0;
-    
-    uint32_t len = read_uint32(&buffer);
 
-    debug_print_content_as_hex("Incoming data length", &len, sizeof(len));
-
-    return len;
+    return ntohl(len);
 }
 
 int send_length(int fd, uint32_t len)
 {
-    data_buffer buffer = { .position = 0 };
+    len = htonl(len);
 
-    write_uint32(&buffer, len);
-
-    debug_print_content_as_hex("Outgoing data length", &len, sizeof(len));
-
-    return send(fd, &buffer.data, 4, 0) == 4;
+    return send(fd, &len, sizeof(len), MSG_NOSIGNAL) == sizeof(len);
 }
