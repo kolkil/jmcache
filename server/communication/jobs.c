@@ -226,11 +226,16 @@ int do_job(hash_table *hash, mpocket_request request, int client_fd, connection_
     return result;
 }
 
-int read_data_send_response(hash_table *hash, int client_fd, connection_statistics *stats)
+int read_data_send_response(hash_table *hash, int client_fd, connection_statistics *stats, int first)
 {
     mpocket_request request = read_request(client_fd);
     if (request.code != 0)
         return 0;
+
+    if(request.header.command == ACCESS)
+    {
+        
+    }
 
     if (!do_job(hash, request, client_fd, stats))
     {

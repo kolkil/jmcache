@@ -7,9 +7,12 @@ typedef struct
 {
     hash_table *hash;
     int fd,
-        busy;
+        busy,
+        access_key_len,
+        is_first;
     logger *traffic_logger,
         *error_logger;
+    uint8_t **access_key_ptr;
 } thread_data;
 
 typedef struct
@@ -21,5 +24,5 @@ typedef struct
 
 int dealer_thread(void *);
 int join_completed_dealer_threads(thrd_t *, thread_data *);
-int create_thread_for_request(thrd_t *, thread_data *, int);
+int create_thread_for_request(thrd_t *, thread_data *, int, int);
 int logger_thread(void *);

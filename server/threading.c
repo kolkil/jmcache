@@ -42,7 +42,7 @@ int deal_with_client(thread_data *data)
     int income_time = time(NULL);
 
     while (result)
-        result = read_data_send_response(data->hash, data->fd, &stats);
+        result = read_data_send_response(data->hash, data->fd, &stats, data->is_first);
 
     int end_time = time(NULL);
 
@@ -82,7 +82,7 @@ int join_completed_dealer_threads(thrd_t *threads, thread_data *t_data)
     return 0;
 }
 
-int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_fd)
+int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_fd, int is_first)
 {
     for (int k = 0; k < THREADS_NUM; ++k)
     {
@@ -91,6 +91,7 @@ int create_thread_for_request(thrd_t *threads, thread_data *t_data, int client_f
             continue;
 
         t_data[k].fd = client_fd;
+        t_data[k].is_first = is_first;
 
         if (thrd_create(&threads[k], dealer_thread, &t_data[k]) != thrd_success)
         {

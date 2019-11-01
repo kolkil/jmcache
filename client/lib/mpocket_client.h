@@ -40,6 +40,13 @@ typedef struct
         items_count;
 } stats_result;
 
+typedef struct
+{
+    query_result result;
+    length_and_data access_key;
+    int ok;
+} access_result;
+
 connection_params mpocket_connect(char *, int);
 int mpocket_dissconnect(connection_params *);
 
@@ -57,3 +64,6 @@ keys_result mpocket_keys(connection_params *);
 all_result mpocket_all(connection_params *);
 
 stats_result mpocket_stats(connection_params *);
+
+/*  send access key to server to estabilish connection */
+access_result mpocket_access(connection_params *params, length_and_data access_key);

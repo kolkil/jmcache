@@ -412,3 +412,46 @@ stats_result mpocket_stats(connection_params *params)
 
     return result;
 }
+
+access_result mpocket_access(connection_params *params, length_and_data access_key)
+{
+    mpocket_request_header header;
+    header.command = ACCESS;
+    header.key_len = access_key.length;
+    header.data_len = 0;
+
+    if (send_request_header(params->server_fd, header) != 0)
+    {
+        close_and_reset(params);
+        access_result result;
+        result.result.code = 2;
+        result.result.error_message = alloc_string("Error during sending header");
+        return result;
+    }
+
+    if (send_data(params->server_fd, access_key.data, access_key.length) == 0)
+    {
+        close_and_reset(params);
+        access_result result;
+        result.result.code = 4;
+        result.result.error_message = alloc_string("Error during sending value");
+        return result;
+    }
+
+    mpocket_response_header response_header = read_response_header(params->server_fd);
+
+    if (response_header.info != OK)
+    {
+        close_and_reset(params);
+        access_result result;
+        result.result.code = 5;
+        result.result.error_message = alloc_string("Server returned error");
+        return result;
+    }
+
+    access_result result;
+    result.ok = response_header.info == OK;
+    result.access_key = read_length_and_data(params->server_fd);
+
+    return result;
+}

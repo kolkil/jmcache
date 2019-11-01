@@ -33,11 +33,22 @@ int select_command()
     printf("[4] keys\n");
     printf("[5] all\n");
     printf("[6] stats\n");
+    printf("[7] access\n");
     printf(": ");
     int choi = -1;
     if (scanf("%d", &choi) != 1)
         return -1;
     return choi;
+}
+
+void print_l_and_d(length_and_data ld)
+{
+    for(int i = 0; i < ld.length; ++i)
+    {
+        if(i != 0)
+            printf(" ");
+        printf("%d", ld.data[i]);
+    }
 }
 
 int main(int argc, char **argv)
@@ -70,6 +81,8 @@ int main(int argc, char **argv)
         keys_result kr;
         all_result ar;
         stats_result sr;
+        access_result acr;
+        length_and_data access_key;
 
         switch (command)
         {
@@ -127,6 +140,14 @@ int main(int argc, char **argv)
         case STATS:
             sr = mpocket_stats(&params);
             printf("filled\t%d\ncount\t%d\n", sr.filled, sr.items_count);
+            break;
+
+        case ACCESS:
+            acr = mpocket_access(&params, access_key);
+            printf("access\t%s\n", acr.ok ? "granted": "denied");
+            printf("access_key\t");
+            print_l_and_d(acr.access_key);
+            printf("\n");
             break;
 
         default:

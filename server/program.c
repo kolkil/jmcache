@@ -33,7 +33,10 @@ int start_program(config_values *cnf)
 {
     signal(SIGINT, intHandler);
     int client_fd = -1;
+    int first = 1;
     hash_table *hash = get_hash_table();
+    uint8_t *access_key = NULL;
+    uint8_t **access_key_ptr = &access_key;
 
     if (cnf->static_load)
     {
@@ -73,6 +76,9 @@ int start_program(config_values *cnf)
         threads_data[i].busy = 0;
         threads_data[i].error_logger = error_data.log;
         threads_data[i].traffic_logger = traffic_data.log;
+        threads_data[i].access_key_ptr = access_key_ptr;
+        threads_data[i].access_key_len = 0;
+        threads_data[i].is_first = 0;
     }
 
     if (cnf->traffic_log && thrd_create(&traffic_logger_thread, logger_thread, &traffic_data) != thrd_success)
@@ -110,7 +116,7 @@ int start_program(config_values *cnf)
 
         for (int flag = -1; flag == -1;) // try to create thread for client
         {
-            flag = create_thread_for_request(t_ids, threads_data, client_fd);
+            flag = create_thread_for_request(t_ids, threads_data, client_fd, first);
 
             if (flag != -1)
             {
@@ -118,6 +124,8 @@ int start_program(config_values *cnf)
                 debug_print_raw("\n");
             }
         }
+
+        first = 0;
     }
 
     join_completed_dealer_threads(t_ids, threads_data);
