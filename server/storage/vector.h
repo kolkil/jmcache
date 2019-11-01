@@ -18,4 +18,4 @@ void free_vector();
 int64_t vector_push_back(vector *, char);
 char vector_pop_back(vector *);
 
-#endif _vector_h_
+#endif

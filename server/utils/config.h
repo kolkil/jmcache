@@ -18,5 +18,5 @@ typedef struct
 config_values *read_config(char *);
 void free_config_values(config_values *);
 
-#endif _config_h_
+#endif
 

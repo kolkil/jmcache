@@ -37,6 +37,7 @@ int start_program(config_values *cnf)
     hash_table *hash = get_hash_table();
     uint8_t *access_key = NULL;
     uint8_t **access_key_ptr = &access_key;
+    int access_key_len = 0;
 
     if (cnf->static_load)
     {
@@ -77,8 +78,9 @@ int start_program(config_values *cnf)
         threads_data[i].error_logger = error_data.log;
         threads_data[i].traffic_logger = traffic_data.log;
         threads_data[i].access_key_ptr = access_key_ptr;
-        threads_data[i].access_key_len = 0;
+        threads_data[i].access_key_len = &access_key_len;
         threads_data[i].is_first = 0;
+        threads_data[i].limit_access = cnf->limit_access;
     }
 
     if (cnf->traffic_log && thrd_create(&traffic_logger_thread, logger_thread, &traffic_data) != thrd_success)

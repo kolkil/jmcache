@@ -3,6 +3,7 @@
 
 #include "../storage/hash_table.h"
 #include "../../shared/protocol.h"
+#include "../threading.h"
 
 typedef struct
 {
@@ -25,6 +26,6 @@ int execute_pop(hash_table *, mpocket_request, int);
 int execute_keys(hash_table *, int);
 int execute_all(hash_table *, int);
 int do_job(hash_table *, mpocket_request, int, connection_statistics *);
-int read_data_send_response(hash_table *, int, connection_statistics *, int);
+int read_data_send_response(thread_data *, connection_statistics *);
 
-#endif _jobs_h_
+#endif

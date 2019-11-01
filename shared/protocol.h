@@ -1,5 +1,6 @@
-#ifndef ./shared/protocol.h
-#define ./shared/protocol.h
+#ifndef _protocol_h_
+#define _protocol_h_
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -74,5 +75,5 @@ length_and_data read_length_and_data(int);
 
 uint32_t read_length(int);
 int send_length(int, uint32_t);
-#endif ./shared/protocol.h
 
+#endif

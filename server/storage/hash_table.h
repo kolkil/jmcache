@@ -40,4 +40,4 @@ void hash_table_print(hash_table *);
 int hash_table_load_from_file(hash_table *, int);
 int hash_table_save_to_file(hash_table *, int);
 
-#endif _hash_table_h_
+#endif

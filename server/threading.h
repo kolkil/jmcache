@@ -1,8 +1,8 @@
 #ifndef _server_threading_h_
 #define _server_threading_h_
 
-#include "communication/jobs.h"
 #include "logger/logger.h"
+#include "storage/hash_table.h"
 
 #define THREADS_NUM 64
 
@@ -11,8 +11,9 @@ typedef struct
     hash_table *hash;
     int fd,
         busy,
-        access_key_len,
-        is_first;
+        *access_key_len,
+        is_first,
+        limit_access;
     logger *traffic_logger,
         *error_logger;
     uint8_t **access_key_ptr;
@@ -30,4 +31,4 @@ int join_completed_dealer_threads(thrd_t *, thread_data *);
 int create_thread_for_request(thrd_t *, thread_data *, int, int);
 int logger_thread(void *);
 
-#endif _server_threading_h_
+#endif

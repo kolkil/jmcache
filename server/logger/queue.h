@@ -19,4 +19,4 @@ void free_log_queue(log_queue *);
 int log_enqueue(log_queue *, char *);
 char *log_dequeue(log_queue *);
 
-#endif _queue_h_
+#endif

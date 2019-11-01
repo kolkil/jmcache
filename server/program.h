@@ -7,4 +7,4 @@
 
 int start_program(config_values *);
 
-#endif _program_h_
+#endif

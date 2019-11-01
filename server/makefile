@@ -21,22 +21,22 @@ tests.o: storage.o
 	$(CC) $(CFLAGS) data.o hash_table.o tests/main.c -o tests.out
 
 storage.o:
-	$(CC) $(CFLAGS) -c storage/*
+	$(CC) $(CFLAGS) -c storage/*.c
 
 communication.o:
-	$(CC) $(CFLAGS) -c communication/*
+	$(CC) $(CFLAGS) -c communication/*.c
 
 utils.o:
-	$(CC) $(CFLAGS) -c utils/*
+	$(CC) $(CFLAGS) -c utils/*.c
 
 program.o:
-	$(CC) $(CFLAGS) -c program.*
+	$(CC) $(CFLAGS) -c program.c
 
 logger.o:
-	$(CC) $(CFLAGS) -c logger/*
+	$(CC) $(CFLAGS) -c logger/*.c
 
 shared.o:
-	$(CC) $(CFLAGS) -c ../shared/*
+	$(CC) $(CFLAGS) -c ../shared/*.c
 
 clean:
 	rm -f *.o; rm -f *.gch; rm -f ./*/*.gch; rm -f ../shared/*.gch;

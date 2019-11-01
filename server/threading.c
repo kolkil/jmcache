@@ -1,5 +1,6 @@
 #include "threading.h"
 #include "../shared/debug_print.h"
+#include "communication/jobs.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -42,7 +43,7 @@ int deal_with_client(thread_data *data)
     int income_time = time(NULL);
 
     while (result)
-        result = read_data_send_response(data->hash, data->fd, &stats, data->is_first);
+        result = read_data_send_response(data, &stats);
 
     int end_time = time(NULL);
 

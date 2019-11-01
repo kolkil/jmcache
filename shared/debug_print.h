@@ -16,4 +16,4 @@ long int microtime_now();
 float micro_to_seconds(long int, long int);
 float msd(long int, long int); // micro to seconds divide
 
-#endif _debug_print_h_
+#endif
