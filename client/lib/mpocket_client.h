@@ -1,3 +1,6 @@
+#ifndef _mpocket_client_h
+#define _mpocket_client_h
+
 #include "../../shared/protocol.h"
 
 typedef struct
@@ -67,3 +70,5 @@ stats_result mpocket_stats(connection_params *);
 
 /*  send access key to server to estabilish connection */
 access_result mpocket_access(connection_params *params, length_and_data access_key);
+
+#endif _mpocket_client_h

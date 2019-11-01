@@ -1,3 +1,6 @@
+#ifndef _logger_h_
+#define _logger_h_
+
 #include "queue.h"
 
 #include <stdio.h>
@@ -15,3 +18,6 @@ logger *logger_new(char *);
 void free_logger(logger *);
 int logger_log(logger *, char *);
 int write_traffic_log_format(logger *);
+
+#endif _logger_h_
+

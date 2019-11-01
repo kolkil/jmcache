@@ -1,3 +1,6 @@
+#ifndef _server_threading_h_
+#define _server_threading_h_
+
 #include "communication/jobs.h"
 #include "logger/logger.h"
 
@@ -26,3 +29,5 @@ int dealer_thread(void *);
 int join_completed_dealer_threads(thrd_t *, thread_data *);
 int create_thread_for_request(thrd_t *, thread_data *, int, int);
 int logger_thread(void *);
+
+#endif _server_threading_h_

@@ -1,3 +1,6 @@
+#ifndef _options_h_
+#define _options_h_
+
 typedef struct
 {
     char *config_path;
@@ -6,3 +9,5 @@ typedef struct
 void set_default_options(input_options *);
 void clear_default_options(input_options *);
 int parse_input(input_options *, int, char **);
+
+#endif _options_h_

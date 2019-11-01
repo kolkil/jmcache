@@ -1,3 +1,6 @@
+#ifndef _config_h_
+#define _config_h_
+
 typedef struct
 {
     int static_save,
@@ -14,3 +17,6 @@ typedef struct
 
 config_values *read_config(char *);
 void free_config_values(config_values *);
+
+#endif _config_h_
+
