@@ -9,7 +9,8 @@ enum
     POP = 3,
     KEYS = 4,
     ALL = 5,
-    STATS = 6
+    STATS = 6,
+    ACCESS = 7
 } COMMANDS;
 
 enum
