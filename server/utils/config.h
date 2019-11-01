@@ -4,7 +4,8 @@ typedef struct
         static_load,
         traffic_log,
         error_log,
-        server_port;
+        server_port,
+        limit_access;
     char *save_path,
         *server_address,
         *traffic_file,

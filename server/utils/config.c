@@ -74,6 +74,7 @@ config_values *read_config(char *path)
         compare_yes_and_set_int("static_load", key_buffer, value_buffer, &config->static_load);
         compare_yes_and_set_int("traffic_log", key_buffer, value_buffer, &config->traffic_log);
         compare_yes_and_set_int("error_log", key_buffer, value_buffer, &config->error_log);
+        compare_yes_and_set_int("limit_access", key_buffer, value_buffer, &config->limit_access);
 
         compare_and_set_int("server_port", key_buffer, value_buffer, &(config->server_port));
 

@@ -10,3 +10,5 @@ traffic_log_file	traffic_log.log
 
 error_log	yes
 error_log_file	error_log.log
+
+limit_access    yes

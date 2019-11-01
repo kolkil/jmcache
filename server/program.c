@@ -108,7 +108,7 @@ int start_program(config_values *cnf)
             continue;
         }
 
-        for (int flag = -1; flag == -1;) //try to create thread for client
+        for (int flag = -1; flag == -1;) // try to create thread for client
         {
             flag = create_thread_for_request(t_ids, threads_data, client_fd);
 
