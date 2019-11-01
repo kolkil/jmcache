@@ -174,6 +174,26 @@ int execute_stats(hash_table *hash, int client_fd)
     return 1;
 }
 
+int execute_access(thread_data *data)
+{
+    mpocket_response_header response_header;
+    if (data->limit_access)
+    {
+        if (data->is_first)
+        {
+            if (*data->access_key_ptr != NULL)
+                free(*data->access_key_ptr);
+
+            *data->access_key_ptr = malloc(sizeof(int));
+            *data->access_key_ptr[0] = 1;
+            *data->access_key_ptr[1] = 2;
+            *data->access_key_ptr[2] = 3;
+            *data->access_key_ptr[3] = 4;
+            *data->access_key_len = 4;
+        }
+    }
+}
+
 int do_job(hash_table *hash, mpocket_request request, int client_fd, connection_statistics *stats)
 {
     long start_time = 0;
@@ -234,21 +254,6 @@ int read_data_send_response(thread_data *data, connection_statistics *stats)
 
     if (request.header.command == ACCESS)
     {
-        if (data->limit_access)
-        {
-            if (data->is_first)
-            {
-                if (*data->access_key_ptr != NULL)
-                    free(*data->access_key_ptr);
-                
-                *data->access_key_ptr = malloc(sizeof(int));
-                *data->access_key_ptr[0] = 1;
-                *data->access_key_ptr[1] = 2;
-                *data->access_key_ptr[2] = 3;
-                *data->access_key_ptr[3] = 4;
-                *data->access_key_len = 4;
-            }
-        }
     }
 
     if (!do_job(data->hash, request, data->fd, stats))
